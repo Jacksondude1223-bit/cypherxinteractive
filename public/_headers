@@ -8,7 +8,13 @@
   Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()
   # 'unsafe-inline' for style-src is required because the pages use inline
   # style attributes. Scripts have no such exemption.
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'
+  #
+  # static.cloudflareinsights.com is Cloudflare Web Analytics, which Cloudflare
+  # injects into the page automatically when it is enabled for the zone; it
+  # then reports to cloudflareinsights.com. Both are needed or the browser
+  # blocks the beacon and logs a CSP violation on every page load. If you turn
+  # Web Analytics off, drop them from this line.
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'
 
 # Images are stable, so cache them hard.
 /assets/img/*

@@ -53,11 +53,39 @@ async function handleContact(request, env) {
     return json({ error: "Method not allowed" }, 405, { Allow: "POST" });
   }
 
-  if (!env.DISCORD_WEBHOOK_URL) {
-    // Misconfiguration, not the visitor's fault — say so in the log, stay
-    // vague in the response.
-    console.error("DISCORD_WEBHOOK_URL is not set");
+  const webhook =
+    typeof env.DISCORD_WEBHOOK_URL === "string" ? env.DISCORD_WEBHOOK_URL.trim() : "";
+
+  if (!webhook) {
+    // Misconfiguration, not the visitor's fault: stay vague in the response,
+    // but log the binding names actually present so a name typo or a secret
+    // added to the wrong Worker is obvious in `wrangler tail`. Names only —
+    // never values.
+    console.error(
+      "DISCORD_WEBHOOK_URL missing. Bindings visible to this Worker: " +
+        (Object.keys(env).join(", ") || "(none)")
+    );
     return json({ error: "Contact form is not configured" }, 503);
+  }
+
+  let webhookUrl;
+  try {
+    webhookUrl = new URL(webhook);
+  } catch {
+    console.error("DISCORD_WEBHOOK_URL is set but is not a valid URL");
+    return json({ error: "Contact form is misconfigured" }, 503);
+  }
+  if (!/^https?:$/.test(webhookUrl.protocol) || webhook.includes("replace-me")) {
+    console.error(
+      "DISCORD_WEBHOOK_URL looks like a placeholder or has the wrong scheme. " +
+        "Expected https://discord.com/api/webhooks/<id>/<token>"
+    );
+    return json({ error: "Contact form is misconfigured" }, 503);
+  }
+  // Warn but continue on a non-Discord host: local development points this at
+  // a stub, and that must keep working.
+  if (!/(^|\.)discord(app)?\.com$/.test(webhookUrl.hostname)) {
+    console.warn("DISCORD_WEBHOOK_URL host is not discord.com:", webhookUrl.hostname);
   }
 
   // Cheap cross-origin block. The form is same-origin, so a missing or
@@ -109,7 +137,7 @@ async function handleContact(request, env) {
 
   const country = request.headers.get("CF-IPCountry") || "unknown";
 
-  const res = await fetch(env.DISCORD_WEBHOOK_URL, {
+  const res = await fetch(webhook, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
