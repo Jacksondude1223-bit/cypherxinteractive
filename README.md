@@ -97,25 +97,63 @@ week. If you add a hashing build step, raise the CSS/JS values.
    a visible template notice. Have them reviewed by a qualified legal adviser before you
    remove that notice.
 
-## Contact form
+## Contact form → Discord
 
-The form has no backend yet. By default it opens the visitor's mail client with the message
-pre-filled (`data-mailto` on the `<form>`).
+Submitting the form POSTs same-origin to `/api/contact`. The Worker (`src/index.js`)
+validates it and relays it to a Discord channel via webhook.
 
-To POST somewhere instead, set an endpoint on the form in `public/contact.html`:
+**The webhook URL never reaches the browser.** It is a credential — anyone holding it can
+post to that channel until it is rotated — so it lives in a Worker secret:
+
+```bash
+npx wrangler secret put DISCORD_WEBHOOK_URL
+# paste the URL from Discord: Server Settings → Integrations → Webhooks
+```
+
+For local development, copy `.dev.vars.example` to `.dev.vars` and put the URL there.
+`.dev.vars` is gitignored.
+
+Without the secret set, the endpoint returns `503` and the page shows the fallback message.
+
+### What the endpoint does
+
+| Guard | Behaviour |
+| --- | --- |
+| Non-POST | `405` |
+| Cross-origin POST | `403` |
+| Missing name / email / message | `400` |
+| Malformed email | `400` |
+| Honeypot field filled | `200`, silently dropped, nothing relayed |
+| More than 5 posts/minute per IP | `429` with `Retry-After` |
+| Discord rejects the post | `502`, logged server-side |
+
+Two details worth keeping if you edit the relay:
+
+- **`allowed_mentions: { parse: [] }`** — without it, a message containing `@everyone` would
+  ping the whole server. Anyone on the internet can submit this form.
+- **Field clamping** — Discord caps embed descriptions at 4096 characters and field values at
+  1024. Oversized input is truncated rather than rejected by Discord.
+
+The honeypot is a `company` field, positioned off-screen with `tabindex="-1"` inside an
+`aria-hidden` wrapper, so people never see it and screen readers and keyboards skip it. Bots
+that fill every input get a cheerful `200` and go nowhere.
+
+The rate limiter is the `CONTACT_LIMITER` binding in `wrangler.jsonc`. If it is ever removed
+the form still works — the Worker treats a missing limiter as "allow" so the endpoint cannot
+be taken down by its own protection — but it would then be an open relay into your Discord.
+
+Submissions include the visitor's country (from `CF-IPCountry`) for triage. IP addresses are
+deliberately not sent to Discord.
+
+To use something other than Discord (Formspree, Basin, your own service), point the form
+elsewhere in `public/contact.html`:
 
 ```html
 <form class="form" data-contact-form data-endpoint="https://…" novalidate>
 ```
 
-`assets/js/main.js` picks it up, POSTs via `fetch`, and falls back to the mail client if the
-request fails.
-
-Since this already runs on a Worker, the natural home for that endpoint is the same Worker:
-add a `main` script to `wrangler.jsonc` handling `POST /api/contact` and forwarding to an
-email provider. Note that requests matching a static asset skip the script entirely, so
-adding one costs nothing for normal page loads. The CSP's `connect-src 'self'` already
-permits a same-origin endpoint; a third-party form service would need adding to that list.
+A third-party host would also need adding to `connect-src` in `public/_headers` — the CSP
+currently allows same-origin requests only.
 
 ### Design system
 

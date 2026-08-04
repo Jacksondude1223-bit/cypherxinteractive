@@ -926,6 +926,17 @@ p { text-wrap: pretty; }
 .field select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%), linear-gradient(135deg, var(--text-dim) 50%, transparent 50%); background-position: calc(100% - 20px) 55%, calc(100% - 14px) 55%; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; }
 
 .form__row { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+/* Honeypot. Off-screen rather than display:none — some bots skip hidden
+   inputs but happily fill positioned ones. Kept out of the tab order and the
+   accessibility tree by the markup. */
+.hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
 .form__note { font-size: 0.82rem; color: var(--text-dim); }
 .form__status { font-size: 0.9rem; padding: 0.85rem 1rem; border-radius: 10px; display: none; }
 .form__status.is-visible { display: block; }

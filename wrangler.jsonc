@@ -3,11 +3,27 @@
   "name": "cypherx-interactive",
   "compatibility_date": "2025-01-01",
 
-  // Static-assets-only Worker: there is no `main` script, so every request is
-  // served straight from Cloudflare's asset storage. Asset requests are not
-  // billed as Worker invocations.
+  // Static assets are matched before the script runs, so ordinary page loads
+  // never invoke the Worker. Only unmatched paths reach src/index.js — in
+  // practice POST /api/contact.
+  "main": "src/index.js",
+
+  // Per-IP throttle for the contact endpoint. Without it the form is an open
+  // relay into the Discord channel.
+  "ratelimits": [
+    {
+      "name": "CONTACT_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 5, "period": 60 }
+    }
+  ],
+
   "assets": {
     "directory": "./public",
+
+    // Lets the Worker hand non-API requests back to the asset server, which
+    // keeps not_found_handling working.
+    "binding": "ASSETS",
 
     // Serve public/404.html (with a 404 status) for paths that match no asset.
     // Use "single-page-application" instead only if this ever becomes a SPA.

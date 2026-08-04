@@ -159,12 +159,22 @@
           body: data
         })
           .then(function (res) {
-            if (!res.ok) throw new Error("Request failed");
-            form.reset();
-            say("Thanks — your message is with us. We reply within two business days.", true);
+            return res.json().catch(function () { return {}; }).then(function (body) {
+              if (!res.ok) {
+                // The endpoint explains itself (rate limits, validation), so
+                // pass that through rather than a generic failure.
+                throw new Error(body.error || "Request failed");
+              }
+              form.reset();
+              say("Thanks — your message is with us. We reply within two business days.", true);
+            });
           })
-          .catch(function () {
-            say("Something went wrong sending that. Email us directly at hello@cypherxinteractive.com.", false);
+          .catch(function (err) {
+            say(
+              (err && err.message ? err.message + " " : "Something went wrong sending that. ") +
+                "You can also email us directly at hello@cypherxinteractive.com.",
+              false
+            );
           })
           .finally(function () {
             if (btn) { btn.disabled = false; btn.textContent = "Send message"; }

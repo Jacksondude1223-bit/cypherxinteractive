@@ -63,7 +63,19 @@
           <h2 style="font-size:1.5rem;margin-bottom:.4rem">Send us a message</h2>
           <p class="muted" style="font-size:.94rem;margin-bottom:1.5rem">Fields marked <span style="color:var(--cyan)">*</span> are required.</p>
 
-          <form class="form" data-contact-form data-mailto="hello@cypherxinteractive.com" novalidate>
+          <!-- Posts same-origin to the Worker, which relays to Discord. The
+               webhook URL is a server-side secret and never reaches the page.
+               data-mailto is the fallback if that request fails. -->
+          <form class="form" data-contact-form data-endpoint="/api/contact"
+                data-mailto="hello@cypherxinteractive.com" novalidate>
+
+            <!-- Honeypot: hidden from people, irresistible to bots. Anything
+                 submitted here is silently dropped server-side. -->
+            <div class="hp" aria-hidden="true">
+              <label for="company">Company</label>
+              <input id="company" name="company" type="text" tabindex="-1" autocomplete="off">
+            </div>
+
             <div class="form__row">
               <div class="field">
                 <label for="name">Name <span>*</span></label>
