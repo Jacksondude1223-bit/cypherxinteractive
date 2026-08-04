@@ -23,12 +23,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Requires Pages to be enabled once by a repo admin:
+      # Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
+      # The workflow's GITHUB_TOKEN cannot turn Pages on itself (the
+      # configure-pages `enablement` option fails with "Resource not accessible
+      # by integration"), so this is a one-time manual step.
       - name: Configure Pages
         uses: actions/configure-pages@v5
-        with:
-          # Turn Pages on automatically if it isn't already, so a fresh clone of
-          # this repo deploys without anyone visiting Settings first.
-          enablement: true
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
