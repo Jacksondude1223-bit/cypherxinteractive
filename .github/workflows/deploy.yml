@@ -25,6 +25,10 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          # Turn Pages on automatically if it isn't already, so a fresh clone of
+          # this repo deploys without anyone visiting Settings first.
+          enablement: true
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
