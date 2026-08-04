@@ -266,7 +266,11 @@
           </li>
           <li>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>
-            <span><b>Graduated response.</b> Warn, throttle, rollback or ban — configurable per detection class.</span>
+            <span><b>Graduated response.</b> Warn, throttle, rollback, isolate or ban — configurable per detection class.</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>
+            <span><b>Containment before punishment.</b> Suspected cheaters are quietly moved to an instance that saves nothing, so the real game stays clean while we confirm.</span>
           </li>
           <li>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>
@@ -299,7 +303,9 @@ Axiom:<span class="c-cy">Watch</span>(<span class="c-str">"Economy"</span>, {
   validate = <span class="c-key">function</span>(player, delta)
     <span class="c-key">return</span> delta &lt;= Ledger:<span class="c-cy">Earned</span>(player)
   <span class="c-key">end</span>,
-  onViolation = Axiom.Action.<span class="c-red">Ban</span>,
+  <span class="c-dim">-- contain first, confirm, then ban</span>
+  onViolation = Axiom.Action.<span class="c-vi">Isolate</span>,
+  onConfirmed = Axiom.Action.<span class="c-red">Ban</span>,
 })</code></pre>
           </div>
         </div>
@@ -483,6 +489,7 @@ Axiom:<span class="c-cy">Watch</span>(<span class="c-str">"Economy"</span>, {
         <h4>AXIOM</h4>
         <ul>
           <li><a href="/axiom">Overview</a></li>
+          <li><a href="/axiom#containment">Containment</a></li>
           <li><a href="/axiom#coverage">Coverage</a></li>
           <li><a href="/axiom#faq">FAQ</a></li>
           <li><a href="/contact">Licensing</a></li>

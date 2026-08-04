@@ -125,7 +125,7 @@
         </article>
         <article class="step" data-reveal data-reveal-delay="210">
           <h3>Respond</h3>
-          <p>Clear, warn, throttle, rollback or ban — per detection class, with the evidence attached.</p>
+          <p>Clear, warn, throttle, rollback, <a href="#containment" style="color:var(--cyan)">isolate</a> or ban — per detection class, with the evidence attached.</p>
         </article>
       </div>
 
@@ -156,7 +156,9 @@ Axiom:<span class="c-cy">Watch</span>(<span class="c-str">"Economy"</span>, {
   validate = <span class="c-key">function</span>(player, delta)
     <span class="c-key">return</span> delta &lt;= Ledger:<span class="c-cy">Earned</span>(player)
   <span class="c-key">end</span>,
-  onViolation = Axiom.Action.<span class="c-red">Ban</span>,
+  <span class="c-dim">-- contain first, confirm, then ban</span>
+  onViolation = Axiom.Action.<span class="c-vi">Isolate</span>,
+  onConfirmed = Axiom.Action.<span class="c-red">Ban</span>,
 })
 
 <span class="c-dim">-- remotes</span>
@@ -188,8 +190,141 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
     </div>
   </section>
 
+  <!-- ============================ CONTAINMENT ============================ -->
+  <section class="section section--alt" id="containment">
+    <div class="wrap">
+      <div class="head" data-reveal>
+        <p class="eyebrow">Containment</p>
+        <h2>We don't always ban on first detection.</h2>
+        <p>
+          A ban is a loud, permanent answer to a question you might still be getting wrong.
+          When AXIOM flags suspicious activity, the player is quietly moved into an isolated
+          instance instead of a public server — and everything they do there stops at the door.
+        </p>
+      </div>
+
+      <div class="split" style="align-items:start">
+        <div data-reveal>
+          <h3 style="font-size:1.4rem;margin-bottom:1rem">What the player sees</h3>
+          <p class="muted">
+            Nothing. The isolated instance looks and plays like a normal server, so there's no
+            obvious moment that tips them off and no reason to switch tactics or start a new
+            account.
+          </p>
+
+          <h3 style="font-size:1.4rem;margin:2rem 0 1rem">What actually happens</h3>
+          <ul class="ticks">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>
+              <span><b>Nothing is saved.</b> No data, no progress, no rewards, no economy changes — the instance writes to nothing.</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>
+              <span><b>Everything resets on rejoin.</b> The moment they leave and enter a public server, none of it carried over.</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>
+              <span><b>The real game is untouched.</b> Other players never share a server with a live exploit, and the economy never sees it.</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>
+              <span><b>We get evidence.</b> Behaviour keeps generating signal, which is what turns a suspicion into a confirmed case.</span>
+            </li>
+          </ul>
+
+          <p class="muted" style="margin-top:1.6rem">
+            Bans are still used — for confirmed, serious violations. Containment is the safer
+            first step that earns us the confidence to take one.
+          </p>
+        </div>
+
+        <div data-reveal data-reveal-delay="100">
+          <div class="compare-scroll">
+            <div class="compare">
+              <div class="compare__row compare__row--head">
+                <span></span>
+                <span class="compare__cell">Public server</span>
+                <span class="compare__cell compare__cell--iso">Isolated instance</span>
+              </div>
+              <div class="compare__row">
+                <span class="compare__label">Look and feel</span>
+                <span class="compare__cell">Normal</span>
+                <span class="compare__cell">Identical</span>
+              </div>
+              <div class="compare__row">
+                <span class="compare__label">Player data</span>
+                <span class="compare__cell compare__cell--yes">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>Saved
+                </span>
+                <span class="compare__cell compare__cell--no">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Never written
+                </span>
+              </div>
+              <div class="compare__row">
+                <span class="compare__label">Progress</span>
+                <span class="compare__cell compare__cell--yes">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>Persists
+                </span>
+                <span class="compare__cell compare__cell--no">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Discarded
+                </span>
+              </div>
+              <div class="compare__row">
+                <span class="compare__label">Rewards and drops</span>
+                <span class="compare__cell compare__cell--yes">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>Granted
+                </span>
+                <span class="compare__cell compare__cell--no">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Void
+                </span>
+              </div>
+              <div class="compare__row">
+                <span class="compare__label">Economy effects</span>
+                <span class="compare__cell compare__cell--yes">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>Applied
+                </span>
+                <span class="compare__cell compare__cell--no">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Contained
+                </span>
+              </div>
+              <div class="compare__row">
+                <span class="compare__label">On rejoin</span>
+                <span class="compare__cell">Continues</span>
+                <span class="compare__cell compare__cell--no">Resets</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flow">
+            <div class="flow__step">
+              <b>Detection</b>
+              <span>A watcher flags behaviour it can't clear.</span>
+            </div>
+            <div class="flow__step flow__step--iso">
+              <b>Isolation</b>
+              <span>Quietly routed to a non-persisting instance.</span>
+            </div>
+            <div class="flow__step flow__step--ban">
+              <b>Confirmed</b>
+              <span>Evidence holds up — enforcement follows.</span>
+            </div>
+            <div class="flow__step flow__step--free">
+              <b>Cleared</b>
+              <span>False alarm — returned, nothing lost.</span>
+            </div>
+          </div>
+
+          <p class="form__note" style="margin-top:1rem">
+            A cleared player loses nothing, because nothing they did in isolation was ever
+            going to count.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ============================ COVERAGE ============================ -->
-  <section class="section section--alt" id="coverage">
+  <section class="section" id="coverage">
     <div class="wrap">
       <div class="head head--center" data-reveal>
         <p class="eyebrow">Coverage</p>
@@ -238,6 +373,7 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
             <div class="log"><time>02:14:19</time><span><b>Remote</b> · 240 calls/s on <code>RequestReward</code></span><span class="verdict verdict--block">Blocked</span></div>
             <div class="log"><time>02:14:31</time><span><b>Remote</b> · unsigned payload on <code>PurchaseItem</code></span><span class="verdict verdict--block">Blocked</span></div>
             <div class="log"><time>02:15:02</time><span><b>Economy</b> · credit spike, 3σ from player baseline</span><span class="verdict verdict--flag">Flagged</span></div>
+            <div class="log"><time>02:15:09</time><span><b>Session</b> · repeat flags — routed to non-persisting instance</span><span class="verdict verdict--iso">Isolated</span></div>
             <div class="log"><time>02:15:18</time><span><b>Combat</b> · reach 21 studs vs 14 permitted</span><span class="verdict verdict--block">Blocked</span></div>
             <div class="log"><time>02:15:44</time><span><b>Combat</b> · hit registered within tolerance</span><span class="verdict verdict--pass">Cleared</span></div>
           </div>
@@ -248,7 +384,7 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
   </section>
 
   <!-- ============================ FAQ ============================ -->
-  <section class="section" id="faq">
+  <section class="section section--alt" id="faq">
     <div class="wrap wrap--narrow">
       <div class="head head--center" data-reveal>
         <p class="eyebrow">FAQ</p>
@@ -284,9 +420,22 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
         <details>
           <summary>How are false positives handled?</summary>
           <div class="faq__body">
-            Enforcement is graduated per detection class: most anomalies warn or throttle before they
-            ever ban. Every action is written to an audit log with the triggering evidence, and the
-            optional appeals flow lets moderators review a replayable case rather than a bare verdict.
+            Enforcement is graduated per detection class: most anomalies warn, throttle or
+            <a href="#containment" style="color:var(--cyan)">isolate</a> long before they ever ban.
+            Containment is deliberately reversible — a wrongly flagged player loses nothing, because
+            nothing done in an isolated instance was ever going to be saved. Every action is written
+            to an audit log with the triggering evidence, and the optional appeals flow lets
+            moderators review a replayable case rather than a bare verdict.
+          </div>
+        </details>
+        <details>
+          <summary>What happens to a player who gets flagged?</summary>
+          <div class="faq__body">
+            Usually not a ban. They're moved into an isolated instance that looks and plays like a
+            normal server but persists nothing — no data, no progress, no rewards, no economy
+            changes. That keeps the real game clean while we confirm or rule out the detection.
+            Bans are reserved for confirmed, serious violations.
+            <a href="#containment" style="color:var(--cyan)">Full detail here.</a>
           </div>
         </details>
         <details>
@@ -356,6 +505,7 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
         <h4>AXIOM</h4>
         <ul>
           <li><a href="/axiom">Overview</a></li>
+          <li><a href="/axiom#containment">Containment</a></li>
           <li><a href="/axiom#coverage">Coverage</a></li>
           <li><a href="/axiom#faq">FAQ</a></li>
           <li><a href="/contact">Licensing</a></li>

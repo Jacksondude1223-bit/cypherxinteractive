@@ -679,6 +679,7 @@ p { text-wrap: pretty; }
 .term .c-dim  { color: var(--text-dim); }
 .term .c-cy   { color: var(--cyan); }
 .term .c-red  { color: var(--red); }
+.term .c-vi   { color: var(--violet); }
 
 /* Log rows */
 .logs { display: grid; gap: 0.55rem; margin-top: 1rem; }
@@ -706,6 +707,117 @@ p { text-wrap: pretty; }
 .verdict--block { color: var(--red);   background: rgba(248, 113, 113, 0.12); }
 .verdict--flag  { color: var(--amber); background: rgba(251, 191, 36, 0.12); }
 .verdict--pass  { color: var(--green); background: rgba(52, 211, 153, 0.12); }
+.verdict--iso   { color: var(--violet); background: rgba(139, 92, 246, 0.14); }
+
+/* --------------------------------------------------------------------------
+   10b. Comparison grid — public server vs isolated instance
+   -------------------------------------------------------------------------- */
+/* The grid needs room for three readable columns, so it scrolls inside its own
+   container rather than forcing the page to scroll sideways. */
+.compare-scroll { overflow-x: auto; border-radius: var(--radius); }
+
+.compare {
+  min-width: 520px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.compare__row {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.85rem 1.15rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.92rem;
+}
+.compare__row:first-child { border-top: 0; }
+
+.compare__row--head {
+  background: rgba(255, 255, 255, 0.03);
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+.compare__row--head .compare__cell { color: var(--text); }
+.compare__row--head .compare__cell--iso { color: var(--violet); }
+
+.compare__label { color: var(--text-muted); }
+
+.compare__cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 550;
+}
+.compare__cell svg { width: 15px; height: 15px; flex: none; }
+.compare__cell--yes { color: var(--green); }
+.compare__cell--no  { color: var(--amber); }
+
+/* Narrow screens: the contrast IS the content, so never let the isolated
+   column fall off behind a horizontal scrollbar. Stack the label onto its own
+   line and put the two values side by side, each captioned with its column. */
+@media (max-width: 640px) {
+  .compare { min-width: 0; }
+  .compare__row--head { display: none; }
+
+  .compare__row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem 0.9rem;
+    padding: 0.95rem 1rem;
+  }
+  .compare__label {
+    grid-column: 1 / -1;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .compare__cell { flex-wrap: wrap; font-size: 0.85rem; }
+  .compare__cell::before {
+    flex-basis: 100%;
+    font-family: var(--font-mono);
+    font-size: 0.57rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.2rem;
+  }
+  .compare__row > :nth-child(2)::before { content: "Public"; }
+  .compare__row > :nth-child(3)::before { content: "Isolated"; }
+}
+
+/* Flow: detection → containment → outcome */
+/* 190px min lands two per row in the panel column, so the branch reads as
+   Detection → Isolation on top, and the two mutually exclusive outcomes
+   (Confirmed / Cleared) side by side underneath. */
+.flow {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  margin-top: 1.25rem;
+}
+.flow__step {
+  position: relative;
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+.flow__step b {
+  display: block;
+  font-size: 0.94rem;
+  margin-bottom: 0.3rem;
+}
+.flow__step span { color: var(--text-muted); font-size: 0.85rem; }
+.flow__step--iso  { border-color: rgba(139, 92, 246, 0.34); background: rgba(139, 92, 246, 0.06); }
+.flow__step--ban  { border-color: rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.05); }
+.flow__step--free { border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.05); }
 
 /* --------------------------------------------------------------------------
    11. Process / timeline
