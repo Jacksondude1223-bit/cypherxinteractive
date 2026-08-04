@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AXIOM Anticheat — CypherX Interactive</title>
+<meta name="description" content="AXIOM is CypherX Interactive's server-authoritative anticheat platform for Roblox: behavioural detection, exploit signatures, graduated enforcement and a full audit trail.">
+<meta name="theme-color" content="#05070d">
+<link rel="canonical" href="https://cypherxinteractive.com/axiom.html">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/style.css">
+<meta property="og:type" content="website">
+<meta property="og:title" content="AXIOM Anticheat — CypherX Interactive">
+<meta property="og:description" content="Server-authoritative anticheat for Roblox. Built by CypherX Interactive, hardened on our own titles.">
+<meta property="og:image" content="https://cypherxinteractive.com/assets/img/art-axiom.svg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="brand" href="index.html" aria-label="CypherX Interactive home">
+      <img class="brand__mark" src="assets/img/logo-mark.svg" alt="" width="32" height="32">
+      <span>
+        <span class="brand__name">Cypher<em>X</em> Interactive</span>
+        <span class="brand__sub">Spheres Hosting LLC</span>
+      </span>
+    </a>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Toggle navigation"><span></span></button>
+    <ul class="nav__links" id="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="games.html">Games</a></li>
+      <li><a href="axiom.html" aria-current="page">AXIOM</a></li>
+      <li><a href="studio.html">Studio</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li class="nav__cta"><a class="btn btn--primary btn--sm" href="contact.html">Work with us</a></li>
+    </ul>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="page-hero">
+    <div class="bg-grid"></div>
+    <div class="bg-orb bg-orb--cyan"></div>
+    <div class="wrap page-hero__inner">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span>/</span> <span>AXIOM</span></nav>
+      <p class="hero__badge" style="margin-bottom:1.4rem"><span class="chip">Platform</span> <span>Security for Roblox experiences</span></p>
+      <h1><span class="gradient-text">AXIOM</span> Anticheat.</h1>
+      <p>
+        A server-authoritative protection layer for Roblox. AXIOM treats the client as untrusted,
+        re-validates the state that matters, and scores what's left against how your players
+        actually behave.
+      </p>
+      <div class="hero__actions" style="margin-top:2.2rem">
+        <a class="btn btn--primary" href="contact.html">Enquire about licensing</a>
+        <a class="btn btn--ghost" href="#how">How it works</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ PRINCIPLES ============================ -->
+  <section class="section section--alt">
+    <div class="wrap">
+      <div class="head" data-reveal>
+        <p class="eyebrow">Design principles</p>
+        <h2>Built on three assumptions.</h2>
+        <p>
+          AXIOM exists because our own games needed it. Every design decision follows from what
+          actually breaks live Roblox experiences.
+        </p>
+      </div>
+
+      <div class="grid grid--3">
+        <article class="card" data-reveal>
+          <div class="card__num">ASSUMPTION 01</div>
+          <h3>The client is hostile</h3>
+          <p>
+            Anything running on a player's machine can be read, patched or replayed. AXIOM never
+            trusts a client-reported result — it recomputes the ones that carry value.
+          </p>
+        </article>
+        <article class="card" data-reveal data-reveal-delay="80">
+          <div class="card__num">ASSUMPTION 02</div>
+          <h3>Signatures go stale</h3>
+          <p>
+            Known-exploit lists lag behind the people writing exploits. Behavioural baselines catch
+            the shape of cheating even when the specific tool is new.
+          </p>
+        </article>
+        <article class="card" data-reveal data-reveal-delay="160">
+          <div class="card__num">ASSUMPTION 03</div>
+          <h3>False positives cost players</h3>
+          <p>
+            A wrongly banned player is a lost player. Detections are graduated and every action
+            carries the evidence that caused it, so appeals can be answered honestly.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ HOW IT WORKS ============================ -->
+  <section class="section" id="how">
+    <div class="wrap">
+      <div class="head" data-reveal>
+        <p class="eyebrow">How it works</p>
+        <h2>Four stages, one frame.</h2>
+        <p>Every guarded action passes the same pipeline before the server commits it.</p>
+      </div>
+
+      <div class="steps">
+        <article class="step" data-reveal>
+          <h3>Intercept</h3>
+          <p>Guarded remotes and state transitions are wrapped. Nothing reaches game logic unchecked.</p>
+        </article>
+        <article class="step" data-reveal data-reveal-delay="70">
+          <h3>Validate</h3>
+          <p>Hard rules first — physics bounds, rate limits, ownership, payload shape and signing.</p>
+        </article>
+        <article class="step" data-reveal data-reveal-delay="140">
+          <h3>Score</h3>
+          <p>What passes is compared to the player's own baseline and the server population's.</p>
+        </article>
+        <article class="step" data-reveal data-reveal-delay="210">
+          <h3>Respond</h3>
+          <p>Clear, warn, throttle, rollback or ban — per detection class, with the evidence attached.</p>
+        </article>
+      </div>
+
+      <div class="split" style="margin-top:clamp(3rem,6vw,4.5rem)">
+        <div class="panel" data-reveal>
+          <div class="term">
+            <div class="term__bar"><i></i><i></i><i></i><span>axiom · configuration</span></div>
+            <div class="term__body">
+<pre><code><span class="c-dim">-- ServerScriptService/AxiomBootstrap.server.luau</span>
+<span class="c-key">local</span> Axiom = <span class="c-key">require</span>(ServerStorage.Axiom)
+
+Axiom:<span class="c-cy">Init</span>({
+  mode      = <span class="c-str">"enforce"</span>,  <span class="c-dim">-- observe | enforce</span>
+  telemetry = <span class="c-key">true</span>,
+  appeals   = <span class="c-key">true</span>,
+})
+
+<span class="c-dim">-- physics</span>
+Axiom:<span class="c-cy">Watch</span>(<span class="c-str">"Movement"</span>, {
+  maxStudsPerSecond = <span class="c-num">42</span>,
+  maxVerticalDelta  = <span class="c-num">18</span>,
+  toleranceFrames   = <span class="c-num">3</span>,
+  onViolation       = Axiom.Action.<span class="c-red">Rollback</span>,
+})
+
+<span class="c-dim">-- economy</span>
+Axiom:<span class="c-cy">Watch</span>(<span class="c-str">"Economy"</span>, {
+  validate = <span class="c-key">function</span>(player, delta)
+    <span class="c-key">return</span> delta &lt;= Ledger:<span class="c-cy">Earned</span>(player)
+  <span class="c-key">end</span>,
+  onViolation = Axiom.Action.<span class="c-red">Ban</span>,
+})
+
+<span class="c-dim">-- remotes</span>
+Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
+  rateLimit = { calls = <span class="c-num">12</span>, perSeconds = <span class="c-num">1</span> },
+  schema    = <span class="c-key">true</span>,
+})</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div data-reveal data-reveal-delay="100">
+          <h3 style="font-size:1.5rem;margin-bottom:1rem">Drop-in, then tune</h3>
+          <p class="muted">
+            AXIOM ships as a server module. Start in <b style="color:var(--text)">observe</b> mode to
+            collect a fortnight of baselines without touching a single player, review what it would
+            have done, then flip to <b style="color:var(--text)">enforce</b> when the thresholds
+            match your game.
+          </p>
+
+          <ul class="ticks" style="margin-top:1.6rem">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span><b>No client dependency.</b> Nothing to install on the player's side, nothing to bypass.</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span><b>Budgeted.</b> Detection work is bounded per frame so it never becomes the lag source.</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span><b>Composable.</b> Watchers are per-system; adopt movement first, economy later.</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span><b>Moderator tooling.</b> A review queue with replayable evidence, not just a ban list.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ COVERAGE ============================ -->
+  <section class="section section--alt" id="coverage">
+    <div class="wrap">
+      <div class="head head--center" data-reveal>
+        <p class="eyebrow">Coverage</p>
+        <h2>What AXIOM watches.</h2>
+        <p>Detection classes are modular. Enable what your title needs and leave the rest dormant.</p>
+      </div>
+
+      <div class="grid grid--3">
+        <article class="card" data-reveal>
+          <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg></div>
+          <h3>Movement &amp; physics</h3>
+          <p>Speed, flight, noclip, teleport and gravity manipulation, checked against the server's own simulation bounds.</p>
+        </article>
+        <article class="card" data-reveal data-reveal-delay="60">
+          <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <h3>Economy integrity</h3>
+          <p>Currency and item grants reconciled against a server-side ledger. Duplication and injection fail closed.</p>
+        </article>
+        <article class="card" data-reveal data-reveal-delay="120">
+          <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 3.5 21 10l-9.5 9.5L5 13z"/><path d="m3 21 3.5-3.5"/></svg></div>
+          <h3>Combat validation</h3>
+          <p>Reach, fire rate, line of sight and damage magnitude re-derived on the server before a hit lands.</p>
+        </article>
+        <article class="card" data-reveal data-reveal-delay="180">
+          <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="m8 10 3 3-3 3M14 16h3"/></svg></div>
+          <h3>Remote abuse</h3>
+          <p>Rate limiting, schema validation and argument signing on every guarded RemoteEvent and RemoteFunction.</p>
+        </article>
+        <article class="card" data-reveal data-reveal-delay="240">
+          <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.2 2.2M16.9 16.9l2.2 2.2M19.1 4.9l-2.2 2.2M7.1 16.9l-2.2 2.2"/></svg></div>
+          <h3>Behavioural anomalies</h3>
+          <p>Per-player baselines across session length, input cadence and progression rate. Outliers surface for review.</p>
+        </article>
+        <article class="card" data-reveal data-reveal-delay="300">
+          <div class="card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3 8 3z"/><path d="M12 8v4M12 16h.01"/></svg></div>
+          <h3>Account &amp; alt patterns</h3>
+          <p>Repeat-offender correlation and ban-evasion signals, weighted so shared households aren't punished.</p>
+        </article>
+      </div>
+
+      <div class="panel mt-lg" data-reveal>
+        <div style="position:relative;z-index:1">
+          <p class="eyebrow">Live enforcement log</p>
+          <div class="logs" style="margin-top:.5rem">
+            <div class="log"><time>02:14:07</time><span><b>Movement</b> · 128 studs/s, 3.0× baseline ceiling</span><span class="verdict verdict--block">Blocked</span></div>
+            <div class="log"><time>02:14:19</time><span><b>Remote</b> · 240 calls/s on <code>RequestReward</code></span><span class="verdict verdict--block">Blocked</span></div>
+            <div class="log"><time>02:14:31</time><span><b>Remote</b> · unsigned payload on <code>PurchaseItem</code></span><span class="verdict verdict--block">Blocked</span></div>
+            <div class="log"><time>02:15:02</time><span><b>Economy</b> · credit spike, 3σ from player baseline</span><span class="verdict verdict--flag">Flagged</span></div>
+            <div class="log"><time>02:15:18</time><span><b>Combat</b> · reach 21 studs vs 14 permitted</span><span class="verdict verdict--block">Blocked</span></div>
+            <div class="log"><time>02:15:44</time><span><b>Combat</b> · hit registered within tolerance</span><span class="verdict verdict--pass">Cleared</span></div>
+          </div>
+          <p class="form__note" style="margin-top:1rem">Illustrative sample. Live dashboards are available to licensed studios.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ FAQ ============================ -->
+  <section class="section" id="faq">
+    <div class="wrap wrap--narrow">
+      <div class="head head--center" data-reveal>
+        <p class="eyebrow">FAQ</p>
+        <h2>Questions we get asked.</h2>
+      </div>
+
+      <div class="faq" data-reveal>
+        <details open>
+          <summary>Is AXIOM available to studios outside CypherX?</summary>
+          <div class="faq__body">
+            AXIOM was built for our own titles and is hardened there first. We licence it selectively
+            to studios whose games are a good fit. Get in touch with your experience link, concurrent
+            player range and the exploit classes hurting you most, and we'll tell you honestly whether
+            it helps.
+          </div>
+        </details>
+        <details>
+          <summary>Does it need a client-side component?</summary>
+          <div class="faq__body">
+            No. AXIOM is entirely server-side. There is nothing on the player's machine to detect,
+            patch or bypass, and no impact on load times. Optional client hints can improve accuracy
+            for some detections, but nothing depends on them being honest.
+          </div>
+        </details>
+        <details>
+          <summary>What does it cost in server performance?</summary>
+          <div class="faq__body">
+            Detection work is budgeted per frame, and the expensive checks are sampled rather than
+            exhaustive. If the budget is exceeded, AXIOM degrades to hard-rule validation only — it
+            will never become the reason your server drops frames.
+          </div>
+        </details>
+        <details>
+          <summary>How are false positives handled?</summary>
+          <div class="faq__body">
+            Enforcement is graduated per detection class: most anomalies warn or throttle before they
+            ever ban. Every action is written to an audit log with the triggering evidence, and the
+            optional appeals flow lets moderators review a replayable case rather than a bare verdict.
+          </div>
+        </details>
+        <details>
+          <summary>How long does onboarding take?</summary>
+          <div class="faq__body">
+            The module drops in within a day. We recommend running two weeks in observe mode to build
+            baselines and review what enforcement <em>would</em> have done before switching it on.
+          </div>
+        </details>
+      </div>
+
+      <div class="cta mt-lg" data-reveal>
+        <div class="bg-orb bg-orb--cyan"></div>
+        <div class="bg-orb bg-orb--violet"></div>
+        <h2>Talk to us about AXIOM.</h2>
+        <p>Tell us about your experience and what you're seeing. We'll come back with a straight answer.</p>
+        <div class="cta__actions">
+          <a class="btn btn--primary" href="contact.html">Start a conversation</a>
+          <a class="btn btn--ghost" href="games.html">See it in production</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer__grid">
+      <div class="footer__about">
+        <a class="brand" href="index.html">
+          <img class="brand__mark" src="assets/img/logo-mark.svg" alt="" width="32" height="32">
+          <span>
+            <span class="brand__name">Cypher<em>X</em> Interactive</span>
+            <span class="brand__sub">Spheres Hosting LLC</span>
+          </span>
+        </a>
+        <p>
+          Roblox game development, security and live operations. Creators of SMFT: Gods,
+          PlushX Tycoon and AXIOM Anticheat.
+        </p>
+        <div class="socials">
+          <a href="https://discord.gg/" aria-label="Discord" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.3 4.9A19 19 0 0 0 15.7 3.5l-.3.5a14 14 0 0 0-6.8 0l-.3-.5A19 19 0 0 0 3.7 4.9C.9 9 .2 13 .5 17a19 19 0 0 0 5.8 2.9l1.2-1.9a12 12 0 0 1-1.9-.9l.5-.4a13.6 13.6 0 0 0 11.8 0l.5.4a12 12 0 0 1-1.9.9l1.2 1.9A19 19 0 0 0 23.5 17c.4-4.7-.7-8.7-3.2-12.1ZM8.1 14.6c-1.1 0-2-1-2-2.3s.9-2.3 2-2.3 2 1 2 2.3-.9 2.3-2 2.3Zm7.8 0c-1.1 0-2-1-2-2.3s.9-2.3 2-2.3 2 1 2 2.3-.9 2.3-2 2.3Z"/></svg></a>
+          <a href="https://www.roblox.com/" aria-label="Roblox" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.9 0 0 19.1 19.1 24 24 4.9 4.9 0Zm8.3 14.6-4.4-1.1 1.1-4.4 4.4 1.1-1.1 4.4Z"/></svg></a>
+          <a href="https://x.com/" aria-label="X" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2h3.3l-7.2 8.3L23 22h-6.6l-5.2-6.8L5.2 22H1.9l7.7-8.9L1 2h6.8l4.7 6.2L18.2 2Zm-1.2 18h1.8L7.1 3.9H5.2L17 20Z"/></svg></a>
+          <a href="https://github.com/" aria-label="GitHub" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.9 10.9c.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0C17.1 4.7 18 5 18 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg></a>
+        </div>
+      </div>
+      <div class="footer__col">
+        <h4>Studio</h4>
+        <ul>
+          <li><a href="studio.html">About</a></li>
+          <li><a href="studio.html#values">How we work</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="contact.html#press">Press</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h4>Games</h4>
+        <ul>
+          <li><a href="games.html#smft-gods">SMFT: Gods</a></li>
+          <li><a href="games.html#plushx-tycoon">PlushX Tycoon</a></li>
+          <li><a href="games.html#pipeline">In development</a></li>
+        </ul>
+      </div>
+      <div class="footer__col">
+        <h4>AXIOM</h4>
+        <ul>
+          <li><a href="axiom.html">Overview</a></li>
+          <li><a href="axiom.html#coverage">Coverage</a></li>
+          <li><a href="axiom.html#faq">FAQ</a></li>
+          <li><a href="contact.html">Licensing</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bar">
+      <p>&copy; <span data-year>2026</span> Spheres Hosting LLC. CypherX Interactive is a brand of Spheres Hosting LLC. Not affiliated with or endorsed by Roblox Corporation.</p>
+      <nav aria-label="Legal">
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js" defer></script>
+</body>
+</html>
