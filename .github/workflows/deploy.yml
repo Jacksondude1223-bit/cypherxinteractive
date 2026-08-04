@@ -1,41 +1,35 @@
-name: Deploy to GitHub Pages
+name: Deploy to Cloudflare Workers
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 concurrency:
-  group: pages
+  group: deploy-workers
   cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
-      # Requires Pages to be enabled once by a repo admin:
-      # Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
-      # The workflow's GITHUB_TOKEN cannot turn Pages on itself (the
-      # configure-pages `enablement` option fails with "Resource not accessible
-      # by integration"), so this is a one-time manual step.
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload site
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/setup-node@v4
         with:
-          path: .
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Catches config and asset-directory errors without publishing.
+      - name: Validate configuration
+        run: npx wrangler deploy --dry-run
 
       - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: cloudflare/wrangler-action@v3
+        with:
+          # Repository secrets. The API token needs the
+          # "Edit Cloudflare Workers" permission on the target account.
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

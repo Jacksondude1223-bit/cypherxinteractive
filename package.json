@@ -1,0 +1,14 @@
+{
+  "name": "cypherx-interactive",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CypherX Interactive website — a brand of Spheres Hosting LLC",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "wrangler deploy --dry-run"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
