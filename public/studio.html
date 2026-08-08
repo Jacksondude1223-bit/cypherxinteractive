@@ -32,6 +32,7 @@
       <li><a href="/">Home</a></li>
       <li><a href="/games">Games</a></li>
       <li><a href="/axiom">AXIOM</a></li>
+      <li><a href="/updates">Devlog</a></li>
       <li><a href="/studio" aria-current="page">Studio</a></li>
       <li><a href="/contact">Contact</a></li>
       <li class="nav__cta"><a class="btn btn--primary btn--sm" href="/contact">Work with us</a></li>
@@ -48,9 +49,9 @@
       <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <span>Studio</span></nav>
       <h1>A games studio with an <span class="gradient-text">infrastructure spine</span>.</h1>
       <p>
-        CypherX Interactive is the game development brand of Spheres Hosting LLC. We make original
-        Roblox experiences — and because our parent company runs infrastructure for a living, we make
-        them with backend discipline most game teams have to learn the hard way.
+        CypherX Interactive is the game development brand of Spheres Hosting LLC. We make
+        original Roblox experiences, and because the parent company runs infrastructure for a
+        living, we make them with backend habits most game teams have to learn the hard way.
       </p>
     </div>
   </section>
@@ -62,18 +63,20 @@
         <p class="eyebrow">The story</p>
         <h2 style="font-size:clamp(1.9rem,4.4vw,2.9rem);margin-bottom:1.2rem">Why the brand exists.</h2>
         <p class="muted">
-          Spheres Hosting LLC started on the operations side of the business: servers, services and
-          the unglamorous work of keeping things online. Building games on Roblox was the natural
-          extension — the same problems, with players attached.
+          Spheres Hosting started on the operations side: servers, services and the unglamorous
+          work of keeping other people's things online. Building on Roblox was a sideline that
+          got out of hand. Same problems, more players, considerably more opinions.
         </p>
         <p class="muted">
-          CypherX Interactive is where that work ships. SMFT: Gods and PlushX Tycoon are our own
-          titles, run by the people who built them. AXIOM Anticheat came out of the same effort:
-          we needed protection that took Roblox exploitation seriously, so we wrote it.
+          CypherX Interactive is where that work ships. SMFT: Gods and PlushX Tycoon are our
+          own titles, run by the people who built them. AXIOM came out of the same frustration.
+          We needed protection that took Roblox exploitation seriously, couldn't find it, and
+          wrote it instead.
         </p>
         <p class="muted">
-          We're deliberately a small team. That means fewer titles, longer support windows, and a
-          direct line between the people playing our games and the people changing them.
+          We're deliberately small. That buys us fewer titles, longer support windows, and a
+          very short path between someone reporting a problem and someone fixing it. It also
+          means we say no to a lot of interesting work, which we don't always enjoy.
         </p>
       </div>
 
@@ -110,7 +113,7 @@
       <div class="head" data-reveal>
         <p class="eyebrow">How we work</p>
         <h2>Four rules we don't bend.</h2>
-        <p>They're not slogans — they're the reasons our releases look the way they do.</p>
+        <p>Not slogans. They're the reason our releases look the way they do, and each one has cost us something.</p>
       </div>
 
       <div class="grid grid--2">
@@ -118,64 +121,190 @@
           <div class="card__num">RULE 01</div>
           <h3>The server decides</h3>
           <p>
-            If a value affects progression, economy or competition, the server owns it. Client input
-            is a request, never a result. This is slower to build and it's not negotiable.
+            If a value affects progression, economy or competition, the server owns it. Client
+            input is a request. This is slower to build, it makes some features awkward, and it
+            isn't up for discussion.
           </p>
         </article>
         <article class="card" data-reveal data-reveal-delay="70">
           <div class="card__num">RULE 02</div>
           <h3>Fun at grey-box or not at all</h3>
           <p>
-            A mechanic that isn't enjoyable without art won't become enjoyable with it. Prototypes
-            get killed early so the ones that survive deserve the polish.
+            A mechanic that isn't enjoyable without art won't become enjoyable with it. We kill
+            prototypes early, including ones people were attached to, so the survivors deserve
+            the polish they get.
           </p>
         </article>
         <article class="card" data-reveal data-reveal-delay="140">
           <div class="card__num">RULE 03</div>
           <h3>Player data is not disposable</h3>
           <p>
-            Versioned schemas, tested migrations and backups before every release. A player's hours
-            are not something we're willing to lose to a deploy.
+            Versioned schemas, migrations rehearsed against fresh snapshots, backups before
+            every release. Someone's four hundred hours are not something we're willing to lose
+            to a deploy. We nearly did once and the process changed that week.
           </p>
         </article>
         <article class="card" data-reveal data-reveal-delay="210">
           <div class="card__num">RULE 04</div>
           <h3>Say what changed</h3>
           <p>
-            Balance passes, economy tweaks and enforcement actions get written down. If we can't
-            explain a change publicly, that's a sign we shouldn't ship it.
+            Balance passes, economy tweaks and enforcement actions get written down in the
+            <a href="/updates" style="color:var(--cyan)">devlog</a>. If we can't explain a
+            change publicly, that's usually a sign we shouldn't ship it.
           </p>
         </article>
       </div>
     </div>
   </section>
 
-  <!-- ============================ DISCIPLINES ============================ -->
+  <!-- ============================ WEEK ============================ -->
   <section class="section">
+    <div class="wrap">
+      <div class="head" data-reveal>
+        <p class="eyebrow">The rhythm</p>
+        <h2>What a week actually looks like.</h2>
+        <p>
+          Less glamorous than the trailers suggest. This is the loop that keeps two live titles
+          from drifting.
+        </p>
+      </div>
+
+      <div class="steps">
+        <article class="step" data-reveal>
+          <h3>Monday</h3>
+          <p>Weekend numbers get read: retention, economy health, error rates, anything AXIOM flagged. Whatever looks wrong becomes the week's work.</p>
+        </article>
+        <article class="step" data-reveal data-reveal-delay="70">
+          <h3>Tuesday and Wednesday</h3>
+          <p>Building. Internal playtest on Wednesday evening with whoever's around, which is where most bad ideas quietly die.</p>
+        </article>
+        <article class="step" data-reveal data-reveal-delay="140">
+          <h3>Thursday</h3>
+          <p>Release day. Staged rollout in the evening, UK time, then someone stays with the dashboards until the numbers settle.</p>
+        </article>
+        <article class="step" data-reveal data-reveal-delay="210">
+          <h3>Friday</h3>
+          <p>Fallout, patch notes, and reading the Discord properly. Anything urgent gets fixed today rather than sitting over a weekend.</p>
+        </article>
+      </div>
+
+      <div class="aside mt-lg" data-reveal>
+        <b>Nobody ships on a Friday afternoon.</b> We learned that the ordinary way, by shipping
+        on a Friday afternoon and then spending Saturday on it.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ DISCIPLINES ============================ -->
+  <section class="section section--alt">
     <div class="wrap">
       <div class="head head--center" data-reveal>
         <p class="eyebrow">Capabilities</p>
         <h2>What sits in-house.</h2>
-        <p>No outsourced core systems. The team that designs a feature is the team that operates it.</p>
+        <p>No outsourced core systems. Whoever designs a feature is whoever gets paged about it later.</p>
       </div>
 
       <div class="grid grid--4">
         <article class="card" data-reveal>
           <h3>Systems design</h3>
-          <p>Core loops, progression curves and economy modelling.</p>
+          <p>Core loops, progression curves and economy modelling, usually in a spreadsheet long before the game.</p>
         </article>
         <article class="card" data-reveal data-reveal-delay="60">
           <h3>Luau engineering</h3>
-          <p>Typed, tested, server-authoritative gameplay code.</p>
+          <p>Typed, tested, server-authoritative gameplay code, with the tests that stop a refactor eating a save file.</p>
         </article>
         <article class="card" data-reveal data-reveal-delay="120">
           <h3>Security</h3>
-          <p>AXIOM development, threat research and moderation tooling.</p>
+          <p>AXIOM development, threat research and the moderation tooling our own team uses daily.</p>
         </article>
         <article class="card" data-reveal data-reveal-delay="180">
           <h3>Live operations</h3>
-          <p>Telemetry, release management and 24/7 monitoring.</p>
+          <p>Telemetry, release management and someone on call, because Roblox's peak hours are not our office hours.</p>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ STACK ============================ -->
+  <section class="section" id="stack">
+    <div class="wrap split" style="align-items:start">
+      <div data-reveal>
+        <p class="eyebrow">Our stack</p>
+        <h2 style="font-size:clamp(1.7rem,3.6vw,2.3rem)">Boring tools, mostly on purpose.</h2>
+        <p class="muted" style="margin-top:1.1rem">
+          None of this is exotic. The interesting decisions are in the game code, and everything
+          around it is chosen to be predictable at two in the morning when something has gone
+          wrong and nobody is at their best.
+        </p>
+        <p class="muted" style="margin-top:1.1rem">
+          The one place we spent real effort is the data path. Player saves go through a
+          versioned schema with migrations that are rehearsed against a snapshot taken the same
+          day, and a release doesn't leave the gate without a backup behind it.
+        </p>
+        <div class="hero__actions" style="margin-top:2rem">
+          <a class="btn btn--ghost" href="/updates">Read the devlog</a>
+        </div>
+      </div>
+
+      <div data-reveal data-reveal-delay="100">
+        <div class="spec">
+          <div class="spec__row"><span class="spec__key">Gameplay</span><span><b>Luau</b>, typed where it earns its keep, Rojo for the project tree</span></div>
+          <div class="spec__row"><span class="spec__key">Source</span><span>Git, trunk-based, reviewed before merge</span></div>
+          <div class="spec__row"><span class="spec__key">Data</span><span>Versioned player schemas with rehearsed migrations and pre-release backups</span></div>
+          <div class="spec__row"><span class="spec__key">Security</span><span><b>AXIOM</b>, developed in-house and deployed to our titles first</span></div>
+          <div class="spec__row"><span class="spec__key">Edge &amp; web</span><span>Cloudflare Workers, static assets, no framework on this site</span></div>
+          <div class="spec__row"><span class="spec__key">Telemetry</span><span>Custom event pipeline, dashboards read every Monday</span></div>
+          <div class="spec__row"><span class="spec__key">Comms</span><span>Discord for players, and for a fair amount of the studio</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ WORKING WITH US ============================ -->
+  <section class="section section--alt" id="join">
+    <div class="wrap wrap--narrow">
+      <div class="head head--center" data-reveal>
+        <p class="eyebrow">Working with us</p>
+        <h2>Hiring, honestly.</h2>
+        <p>
+          We post roles rarely and hire slowly, so here's the real picture rather than a careers
+          page full of nothing.
+        </p>
+      </div>
+
+      <div class="faq" data-reveal>
+        <details open>
+          <summary>Is there anything open right now?</summary>
+          <div class="faq__body">
+            Usually not a formal posting. We keep a list of people we'd like to work with and go
+            to it first when something opens up, which means the useful move is getting on that
+            list before we're hiring.
+          </div>
+        </details>
+        <details>
+          <summary>What gets our attention?</summary>
+          <div class="faq__body">
+            A place we can play. A Roblox experience you built, an exploit write-up, a tycoon
+            economy you modelled and then broke on purpose, a module you're proud of. We read
+            work before we read a CV, and a two-line email with a link beats a cover letter.
+          </div>
+        </details>
+        <details>
+          <summary>Do you take on juniors?</summary>
+          <div class="faq__body">
+            Sometimes, and it depends entirely on what's in front of us at the time. We're small
+            enough that everyone has to be able to own something, so we look for evidence you've
+            finished a thing rather than evidence you've studied.
+          </div>
+        </details>
+        <details>
+          <summary>Where does the team work?</summary>
+          <div class="faq__body">
+            Remote, mostly on UK hours because that's where release nights and on-call rotations
+            are anchored. If you're several timezones out, tell us how you'd handle a Thursday
+            deploy and we'll take it seriously.
+          </div>
+        </details>
       </div>
 
       <div class="cta mt-lg" data-reveal>
@@ -183,8 +312,8 @@
         <div class="bg-orb bg-orb--violet"></div>
         <h2>Work with CypherX.</h2>
         <p>
-          Collaborations, AXIOM licensing, or a role on the team — if you take Roblox development
-          seriously, we'd like to hear from you.
+          Collaborations, AXIOM licensing, or a link to something you've made. If you take
+          Roblox development seriously we'd like to hear from you.
         </p>
         <div class="cta__actions">
           <a class="btn btn--primary" href="/contact">Get in touch</a>
@@ -223,6 +352,8 @@
         <ul>
           <li><a href="/studio">About</a></li>
           <li><a href="/studio#values">How we work</a></li>
+          <li><a href="/studio#stack">Our stack</a></li>
+          <li><a href="/updates">Devlog</a></li>
           <li><a href="/contact">Contact</a></li>
           <li><a href="/contact#press">Press</a></li>
         </ul>
@@ -233,6 +364,7 @@
           <li><a href="/games#smft-gods">SMFT: Gods</a></li>
           <li><a href="/games#plushx-tycoon">PlushX Tycoon</a></li>
           <li><a href="/games#pipeline">In development</a></li>
+          <li><a href="/games#support">Player support</a></li>
         </ul>
       </div>
       <div class="footer__col">
@@ -241,6 +373,7 @@
           <li><a href="/axiom">Overview</a></li>
           <li><a href="/axiom#containment">Containment</a></li>
           <li><a href="/axiom#coverage">Coverage</a></li>
+          <li><a href="/axiom#limits">What it won't do</a></li>
           <li><a href="/axiom#faq">FAQ</a></li>
           <li><a href="/contact">Licensing</a></li>
         </ul>
