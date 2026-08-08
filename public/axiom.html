@@ -32,6 +32,7 @@
       <li><a href="/">Home</a></li>
       <li><a href="/games">Games</a></li>
       <li><a href="/axiom" aria-current="page">AXIOM</a></li>
+      <li><a href="/updates">Devlog</a></li>
       <li><a href="/studio">Studio</a></li>
       <li><a href="/contact">Contact</a></li>
       <li class="nav__cta"><a class="btn btn--primary btn--sm" href="/contact">Work with us</a></li>
@@ -49,9 +50,10 @@
       <p class="hero__badge" style="margin-bottom:1.4rem"><span class="chip">Platform</span> <span>Security for Roblox experiences</span></p>
       <h1><span class="gradient-text">AXIOM</span> Anticheat.</h1>
       <p>
-        A server-authoritative protection layer for Roblox. AXIOM treats the client as untrusted,
-        re-validates the state that matters, and scores what's left against how your players
-        actually behave.
+        A server-side protection layer for Roblox. AXIOM assumes the client is lying,
+        recalculates the state that carries value, and scores whatever's left against how your
+        players normally behave. It runs on our own titles, which is where every version gets
+        broken in first.
       </p>
       <div class="hero__actions" style="margin-top:2.2rem">
         <a class="btn btn--primary" href="/contact">Enquire about licensing</a>
@@ -67,8 +69,9 @@
         <p class="eyebrow">Design principles</p>
         <h2>Built on three assumptions.</h2>
         <p>
-          AXIOM exists because our own games needed it. Every design decision follows from what
-          actually breaks live Roblox experiences.
+          AXIOM exists because our own games needed it, so every decision in it comes from
+          something that actually went wrong on a live server rather than from a threat model
+          drawn on a whiteboard.
         </p>
       </div>
 
@@ -77,24 +80,27 @@
           <div class="card__num">ASSUMPTION 01</div>
           <h3>The client is hostile</h3>
           <p>
-            Anything running on a player's machine can be read, patched or replayed. AXIOM never
-            trusts a client-reported result — it recomputes the ones that carry value.
+            Anything running on a player's machine can be read, patched or replayed back at you.
+            AXIOM never trusts a client-reported result. It recomputes the ones that matter and
+            ignores the rest.
           </p>
         </article>
         <article class="card" data-reveal data-reveal-delay="80">
           <div class="card__num">ASSUMPTION 02</div>
           <h3>Signatures go stale</h3>
           <p>
-            Known-exploit lists lag behind the people writing exploits. Behavioural baselines catch
-            the shape of cheating even when the specific tool is new.
+            A list of known exploits is always a list of yesterday's exploits. Baselines catch
+            the shape of cheating even when the specific tool shipped this morning, which is
+            why the two approaches are worth running together.
           </p>
         </article>
         <article class="card" data-reveal data-reveal-delay="160">
           <div class="card__num">ASSUMPTION 03</div>
           <h3>False positives cost players</h3>
           <p>
-            A wrongly banned player is a lost player. Detections are graduated and every action
-            carries the evidence that caused it, so appeals can be answered honestly.
+            Ban someone who did nothing and you've lost them, plus everyone they tell. Responses
+            are graduated, and every action stores the evidence behind it so an appeal can be
+            answered with facts instead of a shrug.
           </p>
         </article>
       </div>
@@ -106,8 +112,11 @@
     <div class="wrap">
       <div class="head" data-reveal>
         <p class="eyebrow">How it works</p>
-        <h2>Four stages, one frame.</h2>
-        <p>Every guarded action passes the same pipeline before the server commits it.</p>
+        <h2>What happens to a guarded action.</h2>
+        <p>
+          Four stages, all of them inside the frame the server was going to spend anyway.
+          Nothing commits until the last one has an answer.
+        </p>
       </div>
 
       <div class="steps">
@@ -117,7 +126,7 @@
         </article>
         <article class="step" data-reveal data-reveal-delay="70">
           <h3>Validate</h3>
-          <p>Hard rules first — physics bounds, rate limits, ownership, payload shape and signing.</p>
+          <p>Hard rules first: physics bounds, rate limits, ownership, payload shape and signing.</p>
         </article>
         <article class="step" data-reveal data-reveal-delay="140">
           <h3>Score</h3>
@@ -125,7 +134,7 @@
         </article>
         <article class="step" data-reveal data-reveal-delay="210">
           <h3>Respond</h3>
-          <p>Clear, warn, throttle, rollback, <a href="#containment" style="color:var(--cyan)">isolate</a> or ban — per detection class, with the evidence attached.</p>
+          <p>Clear, warn, throttle, rollback, <a href="#containment" style="color:var(--cyan)">isolate</a> or ban, chosen per detection class, with the evidence attached.</p>
         </article>
       </div>
 
@@ -171,12 +180,13 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
         </div>
 
         <div data-reveal data-reveal-delay="100">
-          <h3 style="font-size:1.5rem;margin-bottom:1rem">Drop-in, then tune</h3>
+          <h3 style="font-size:1.5rem;margin-bottom:1rem">Drop it in, then tune it</h3>
           <p class="muted">
-            AXIOM ships as a server module. Start in <b style="color:var(--text)">observe</b> mode to
-            collect a fortnight of baselines without touching a single player, review what it would
-            have done, then flip to <b style="color:var(--text)">enforce</b> when the thresholds
-            match your game.
+            AXIOM ships as a server module. Run it in <b style="color:var(--text)">observe</b>
+            mode for a fortnight and it touches nobody: it just builds baselines and writes down
+            what it would have done. Read that, argue with it, adjust the thresholds, and switch
+            to <b style="color:var(--text)">enforce</b> when the list of would-be actions stops
+            containing names you recognise.
           </p>
 
           <ul class="ticks" style="margin-top:1.6rem">
@@ -199,7 +209,7 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
         <p>
           A ban is a loud, permanent answer to a question you might still be getting wrong.
           When AXIOM flags suspicious activity, the player is quietly moved into an isolated
-          instance instead of a public server — and everything they do there stops at the door.
+          instance instead of a public server, and everything they do there stops at the door.
         </p>
       </div>
 
@@ -216,7 +226,7 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
           <ul class="ticks">
             <li>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>
-              <span><b>Nothing is saved.</b> No data, no progress, no rewards, no economy changes — the instance writes to nothing.</span>
+              <span><b>Nothing is saved.</b> No data, no progress, no rewards, no economy changes. The instance writes to nothing.</span>
             </li>
             <li>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>
@@ -233,7 +243,7 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
           </ul>
 
           <p class="muted" style="margin-top:1.6rem">
-            Bans are still used — for confirmed, serious violations. Containment is the safer
+            Bans are still used, for confirmed and serious violations. Containment is the safer
             first step that earns us the confidence to take one.
           </p>
         </div>
@@ -306,11 +316,11 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
             </div>
             <div class="flow__step flow__step--ban">
               <b>Confirmed</b>
-              <span>Evidence holds up — enforcement follows.</span>
+              <span>Evidence holds up, enforcement follows.</span>
             </div>
             <div class="flow__step flow__step--free">
               <b>Cleared</b>
-              <span>False alarm — returned, nothing lost.</span>
+              <span>False alarm. Returned, nothing lost.</span>
             </div>
           </div>
 
@@ -383,6 +393,114 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
     </div>
   </section>
 
+  <!-- ============================ LIMITS ============================ -->
+  <section class="section section--alt" id="limits">
+    <div class="wrap">
+      <div class="head" data-reveal>
+        <p class="eyebrow">Limits</p>
+        <h2>What AXIOM won't do for you.</h2>
+        <p>
+          Every anticheat page on the internet lists what the product catches. Here's the other
+          half, because finding this out three weeks into an integration is worse than reading
+          it now.
+        </p>
+      </div>
+
+      <div class="grid grid--2">
+        <article class="card" data-reveal>
+          <h3>It can't fix a client-authoritative game</h3>
+          <p>
+            If your server takes the client's word for damage, currency or position, AXIOM has
+            nothing to compare against. The honest first step for some titles isn't buying an
+            anticheat, it's moving those decisions server-side. We'll say so if that's you.
+          </p>
+        </article>
+        <article class="card" data-reveal data-reveal-delay="70">
+          <h3>It can't see what it never receives</h3>
+          <p>
+            Visual cheats that only read data your server already replicated, wall hacks and
+            similar, leave no trace on the wire. The fix is replicating less, not detecting
+            more. We'll help you work out what to stop sending.
+          </p>
+        </article>
+        <article class="card" data-reveal data-reveal-delay="140">
+          <h3>It isn't chat or content moderation</h3>
+          <p>
+            AXIOM watches game state. Harassment, scams and inappropriate content are a
+            different problem with different tooling, and Roblox's own systems handle a large
+            part of it. We don't pretend to cover it.
+          </p>
+        </article>
+        <article class="card" data-reveal data-reveal-delay="210">
+          <h3>It doesn't guarantee zero exploits</h3>
+          <p>
+            Nobody can. New tools appear, and something will get through eventually. What AXIOM
+            gives you is a shorter window, contained damage while you work, and enough evidence
+            to understand what happened afterwards.
+          </p>
+        </article>
+      </div>
+
+      <div class="aside mt-lg" data-reveal>
+        <b>One more thing worth saying out loud.</b> Anticheat is a running cost, not a purchase.
+        The studios that get the most out of AXIOM are the ones who read the flags every week
+        and tune the thresholds. If nobody on your team has time for that, tell us and we'll
+        scope the support side properly rather than letting it quietly rot.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ ONBOARDING ============================ -->
+  <section class="section" id="onboarding">
+    <div class="wrap split" style="align-items:start">
+      <div data-reveal>
+        <p class="eyebrow">Getting started</p>
+        <h2 style="font-size:clamp(1.7rem,3.6vw,2.3rem)">A month, roughly.</h2>
+        <p class="muted" style="margin-top:1.1rem">
+          The module itself drops in within a day. The rest of the time goes on baselines and
+          arguing about thresholds, which is the part that decides whether the thing is useful
+          or just noisy.
+        </p>
+
+        <div class="spec" style="margin-top:1.75rem">
+          <div class="spec__row"><span class="spec__key">Week 1</span><span><b>Integration.</b> Module in, movement and remote watchers wired up, observe mode on. Nobody is enforced against.</span></div>
+          <div class="spec__row"><span class="spec__key">Week 2</span><span><b>Baselines.</b> AXIOM learns your players. You get a daily list of what it would have done, and to whom.</span></div>
+          <div class="spec__row"><span class="spec__key">Week 3</span><span><b>Tuning.</b> We go through the would-be actions together and move the thresholds until the false positives stop.</span></div>
+          <div class="spec__row"><span class="spec__key">Week 4</span><span><b>Enforce.</b> Containment first, bans reserved for confirmed cases. Economy watchers usually go last.</span></div>
+          <div class="spec__row"><span class="spec__key">After</span><span>A monthly review while you want one, and a channel where you can shout at us when something looks wrong.</span></div>
+        </div>
+      </div>
+
+      <div data-reveal data-reveal-delay="100">
+        <div class="card">
+          <h3>How licensing works</h3>
+          <p>
+            There's no price list, and that isn't a sales tactic. A tycoon with two hundred
+            concurrent players and a competitive shooter with twenty thousand are different
+            amounts of work for us, so we scope each one.
+          </p>
+          <p style="margin-top:.9rem">What we ask for up front:</p>
+          <ul class="ticks" style="margin-top:1rem">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Your experience link and typical concurrent players.</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Which exploits are actually costing you players right now.</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Whether your economy and combat already run server-side.</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg><span>Who on your side will read the flags each week.</span></li>
+          </ul>
+          <p style="margin-top:1rem">
+            We turn down more enquiries than we accept, usually because we can't support the
+            title properly at the time. A no arrives quickly and with a reason.
+          </p>
+        </div>
+
+        <div class="aside" style="margin-top:1rem">
+          <b>Already running something else?</b> AXIOM coexists with most Roblox anticheat
+          modules during a migration. Running both in enforce mode is a bad idea, though. Pick
+          one to hold the trigger.
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ============================ FAQ ============================ -->
   <section class="section section--alt" id="faq">
     <div class="wrap wrap--narrow">
@@ -395,10 +513,11 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
         <details open>
           <summary>Is AXIOM available to studios outside CypherX?</summary>
           <div class="faq__body">
-            AXIOM was built for our own titles and is hardened there first. We licence it selectively
-            to studios whose games are a good fit. Get in touch with your experience link, concurrent
-            player range and the exploit classes hurting you most, and we'll tell you honestly whether
-            it helps.
+            Yes, selectively. It was built for our own titles and still ships there first, so a
+            licence comes with the same version we're running. Send your experience link,
+            concurrent player range and the exploits hurting you most, and we'll tell you
+            whether it helps. Sometimes the answer is that your problem is architectural and
+            we'd be taking your money.
           </div>
         </details>
         <details>
@@ -413,7 +532,7 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
           <summary>What does it cost in server performance?</summary>
           <div class="faq__body">
             Detection work is budgeted per frame, and the expensive checks are sampled rather than
-            exhaustive. If the budget is exceeded, AXIOM degrades to hard-rule validation only — it
+            exhaustive. If the budget is exceeded, AXIOM degrades to hard-rule validation only. It
             will never become the reason your server drops frames.
           </div>
         </details>
@@ -422,7 +541,7 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
           <div class="faq__body">
             Enforcement is graduated per detection class: most anomalies warn, throttle or
             <a href="#containment" style="color:var(--cyan)">isolate</a> long before they ever ban.
-            Containment is deliberately reversible — a wrongly flagged player loses nothing, because
+            Containment is deliberately reversible, so a wrongly flagged player loses nothing, because
             nothing done in an isolated instance was ever going to be saved. Every action is written
             to an audit log with the triggering evidence, and the optional appeals flow lets
             moderators review a replayable case rather than a bare verdict.
@@ -432,7 +551,7 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
           <summary>What happens to a player who gets flagged?</summary>
           <div class="faq__body">
             Usually not a ban. They're moved into an isolated instance that looks and plays like a
-            normal server but persists nothing — no data, no progress, no rewards, no economy
+            normal server but persists nothing: no data, no progress, no rewards, no economy
             changes. That keeps the real game clean while we confirm or rule out the detection.
             Bans are reserved for confirmed, serious violations.
             <a href="#containment" style="color:var(--cyan)">Full detail here.</a>
@@ -441,8 +560,26 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
         <details>
           <summary>How long does onboarding take?</summary>
           <div class="faq__body">
-            The module drops in within a day. We recommend running two weeks in observe mode to build
-            baselines and review what enforcement <em>would</em> have done before switching it on.
+            The module drops in within a day. Budget a month before you're enforcing properly:
+            two weeks of observe mode to build baselines, then a week of arguing about
+            thresholds with us. <a href="#onboarding" style="color:var(--cyan)">Week by week here.</a>
+          </div>
+        </details>
+        <details>
+          <summary>Where does our telemetry go?</summary>
+          <div class="faq__body">
+            Detection data stays with your game. We see aggregate health metrics for licensed
+            deployments so we can tell when a release of ours has made something worse, and
+            nothing else. We don't sell it, pool it across studios, or use your player data to
+            train anything.
+          </div>
+        </details>
+        <details>
+          <summary>What if we want to stop using it?</summary>
+          <div class="faq__body">
+            Remove the module and your game keeps running. AXIOM sits alongside your systems
+            rather than inside them, so there's nothing to untangle. Your enforcement history
+            gets exported to you on the way out, since your moderators will still need it.
           </div>
         </details>
       </div>
@@ -489,6 +626,8 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
         <ul>
           <li><a href="/studio">About</a></li>
           <li><a href="/studio#values">How we work</a></li>
+          <li><a href="/studio#stack">Our stack</a></li>
+          <li><a href="/updates">Devlog</a></li>
           <li><a href="/contact">Contact</a></li>
           <li><a href="/contact#press">Press</a></li>
         </ul>
@@ -499,6 +638,7 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
           <li><a href="/games#smft-gods">SMFT: Gods</a></li>
           <li><a href="/games#plushx-tycoon">PlushX Tycoon</a></li>
           <li><a href="/games#pipeline">In development</a></li>
+          <li><a href="/games#support">Player support</a></li>
         </ul>
       </div>
       <div class="footer__col">
@@ -507,6 +647,7 @@ Axiom:<span class="c-cy">Guard</span>(ReplicatedStorage.Remotes, {
           <li><a href="/axiom">Overview</a></li>
           <li><a href="/axiom#containment">Containment</a></li>
           <li><a href="/axiom#coverage">Coverage</a></li>
+          <li><a href="/axiom#limits">What it won't do</a></li>
           <li><a href="/axiom#faq">FAQ</a></li>
           <li><a href="/contact">Licensing</a></li>
         </ul>

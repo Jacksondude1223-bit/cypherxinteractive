@@ -12,7 +12,8 @@ step, no framework, no tracking.
 ```
 .
 ├── public/                 # everything served to the browser
-│   ├── index.html · games.html · axiom.html · studio.html · contact.html
+│   ├── index.html · games.html · axiom.html · updates.html
+│   ├── studio.html · contact.html
 │   ├── privacy.html · terms.html · 404.html
 │   ├── _headers            # security + cache headers
 │   ├── robots.txt · sitemap.xml
@@ -86,14 +87,19 @@ week. If you add a hashing build step, raise the CSS/JS values.
 3. **Social links** — Discord, Roblox group, X and GitHub URLs in every footer.
 4. **Email addresses** — `hello@`, `axiom@`, `support@`, `press@` and `privacy@`
    `cypherxinteractive.com`, used across the pages and in `assets/js/main.js`.
-5. **Headline figures** — the homepage stat strip ("Live titles 2", "Ops coverage 24/7")
-   and the pipeline entries in `games.html` were written from the brand description.
-   Confirm they're accurate or replace them.
-6. **Key art** — `assets/img/art-*.svg` are original placeholder illustrations. Drop in real
+5. **Headline figures** — the homepage stat strip ("Live titles 2", "On call 24/7") and the
+   pipeline entries in `games.html` were written from the brand description. Confirm they're
+   accurate or replace them.
+6. **Devlog entries** — `public/updates.html` ships with sample patch notes, a post-mortem
+   and version numbers that are illustrative, not real history. Replace them with actual
+   releases before launch; the homepage teaser repeats the three most recent, so update both.
+   Dates, percentages and the "one flag in forty" figure on the AXIOM page all come from the
+   same sample set.
+7. **Key art** — `assets/img/art-*.svg` are original placeholder illustrations. Drop in real
    screenshots (any 16:10 crop) and update the `<img>` tags.
-7. **Open Graph image** — social platforms don't render SVG previews. Export a 1200×630 PNG
+8. **Open Graph image** — social platforms don't render SVG previews. Export a 1200×630 PNG
    to `assets/img/og-cover.png` and update the `og:image` tags.
-8. **Legal pages** — `privacy.html` and `terms.html` are drafting starting points and carry
+9. **Legal pages** — `privacy.html` and `terms.html` are drafting starting points and carry
    a visible template notice. Have them reviewed by a qualified legal adviser before you
    remove that notice.
 

@@ -502,7 +502,10 @@ p { text-wrap: pretty; }
    8. Cards & grids
    -------------------------------------------------------------------------- */
 .grid { display: grid; gap: 1.25rem; }
-.grid--2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+/* min() so the track can still collapse below its floor on narrow screens.
+   Plain 320px gave three columns inside the 1200px wrap, which left the
+   four-card sections rendering 3 + 1. */
+.grid--2 { grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); }
 .grid--3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 .grid--4 { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
 
@@ -1066,7 +1069,102 @@ p { text-wrap: pretty; }
 }
 
 /* --------------------------------------------------------------------------
-   18. Utilities
+   18. Devlog entries
+   -------------------------------------------------------------------------- */
+.notes { display: grid; gap: 1rem; }
+
+.note {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.6rem 1.75rem;
+  transition: border-color 0.3s var(--ease);
+}
+.note:hover { border-color: var(--line-strong); }
+
+.note__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+.note time {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.note h3 { font-size: 1.12rem; margin-bottom: 0.5rem; }
+.note p  { color: var(--text-muted); font-size: 0.95rem; }
+.note p + p { margin-top: 0.8rem; }
+
+.note ul { list-style: none; padding: 0; margin-top: 0.95rem; display: grid; gap: 0.45rem; }
+.note li {
+  position: relative;
+  padding-left: 1.05rem;
+  color: var(--text-muted);
+  font-size: 0.93rem;
+}
+.note li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0.62em;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--cyan);
+  opacity: 0.65;
+}
+.note li b { color: var(--text); font-weight: 600; }
+.note ul + p { margin-top: 0.95rem; }
+
+.note__by {
+  margin-top: 1.1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+/* Key/value factsheet */
+.spec { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.spec__row {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.45fr) 1fr;
+  gap: 1rem;
+  padding: 0.8rem 1.1rem;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  font-size: 0.92rem;
+}
+.spec__row:first-child { border-top: 0; }
+.spec__key {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding-top: 0.15rem;
+}
+.spec__row span:last-child { color: var(--text-muted); }
+.spec__row b { color: var(--text); font-weight: 600; }
+
+/* Inline aside / caveat */
+.aside {
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--cyan);
+  background: rgba(41, 224, 240, 0.045);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 1.05rem 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.94rem;
+}
+.aside b { color: var(--text); font-weight: 600; }
+
+/* --------------------------------------------------------------------------
+   19. Utilities
    -------------------------------------------------------------------------- */
 .visually-hidden {
   position: absolute !important;
