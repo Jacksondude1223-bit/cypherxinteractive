@@ -22,6 +22,22 @@ jobs:
 
       - run: npm ci
 
+      # Resolves the D1 database, creating it if the account has none, writes
+      # its name and id into wrangler.jsonc, and applies any migrations that
+      # have not run yet. The edit is to the checkout, which is discarded when
+      # the job ends — nothing is committed back.
+      #
+      # Runs before the dry-run below so validation sees the real id rather
+      # than the placeholder in the repo.
+      - name: Prepare D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Optional. Set as a repository variable when the account has more
+          # than one D1 database and the right one is not matched by name.
+          D1_DATABASE_NAME: ${{ vars.D1_DATABASE_NAME }}
+        run: npm run db:setup
+
       # Catches config and asset-directory errors without publishing.
       - name: Validate configuration
         run: npx wrangler deploy --dry-run
@@ -29,7 +45,7 @@ jobs:
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
         with:
-          # Repository secrets. The API token needs the
-          # "Edit Cloudflare Workers" permission on the target account.
+          # Repository secrets. The API token needs "Edit Cloudflare Workers"
+          # and, for the Prepare D1 step above, D1:Edit.
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

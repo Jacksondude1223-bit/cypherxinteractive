@@ -26,7 +26,9 @@ step, no framework, no tracking.
 ├── src/
 │   ├── index.js            # Worker: routing, contact relay, account endpoints
 │   └── auth.js             # password hashing, sessions, validation
-├── migrations/             # D1 schema, applied with wrangler d1 migrations
+├── migrations/             # D1 schema, applied by scripts/d1-setup.mjs
+├── scripts/
+│   └── d1-setup.mjs        # resolves the D1 database + migrates, pre-deploy
 ├── wrangler.jsonc          # Worker config
 ├── package.json
 └── .github/workflows/deploy.yml
@@ -39,9 +41,11 @@ stays out of the deployed bundle.
 
 ```bash
 npm install
-npx wrangler d1 migrations apply cypherx-portal --local   # once, creates the local DB
-npm run dev          # wrangler dev — serves on http://localhost:8787
+npm run dev          # creates and migrates the local D1, then serves on :8787
 ```
+
+`predev` runs `scripts/d1-setup.mjs --local` first, so a fresh clone gets a working
+database without any setup. `npm run db:local` does that part on its own.
 
 `npm run check` runs `wrangler deploy --dry-run` to validate config without publishing.
 
@@ -51,16 +55,35 @@ start from an empty one.
 ## Deploying
 
 ```bash
-npm run deploy       # wrangler deploy
+npm run deploy       # d1-setup, then wrangler deploy
 ```
+
+Use the npm script rather than `npx wrangler deploy`. The `predeploy` hook runs
+`scripts/d1-setup.mjs`, which points the config at the real D1 database and applies any
+pending migrations first. Calling wrangler directly skips that and deploys the placeholder
+id, which fails.
 
 Or let CI do it: `.github/workflows/deploy.yml` deploys on every push to `main`. It needs
 two repository secrets:
 
 | Secret | Value |
 | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | API token with the **Edit Cloudflare Workers** permission |
+| `CLOUDFLARE_API_TOKEN` | API token with **Edit Cloudflare Workers** and **D1:Edit** |
 | `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
+
+D1:Edit is what lets the workflow look up, and if necessary create, the database. Without
+it the Prepare D1 step fails with a permissions error from the API rather than something
+confusing later on.
+
+One optional repository **variable**:
+
+| Variable | When to set it |
+| --- | --- |
+| `D1_DATABASE_NAME` | The account has several D1 databases and the right one isn't matched by the name in `wrangler.jsonc` |
+
+Note the workflow triggers on `main`, which is not currently the repository's default
+branch — pushes to the default branch do not deploy. Change the trigger or the default
+branch, whichever you meant.
 
 The Worker is named `cypherx-interactive` (change `name` in `wrangler.jsonc` if you want a
 different `*.workers.dev` subdomain). To serve it on a real domain, add a route or custom
@@ -127,9 +150,10 @@ week. If you add a hashing build step, raise the CSS/JS values.
    a visible template notice. Have them reviewed by a qualified legal adviser before you
    remove that notice. They do not yet mention accounts; the signup page tells people we
    store an email address and a password hash, and the notice should say the same.
-10. **D1 `database_name` and `database_id`** — `wrangler.jsonc` ships placeholders, and
-    **`wrangler deploy` fails until they match a real database**, including the CI deploy.
-    `npx wrangler d1 list` prints both for a database you already have. See below.
+10. **D1 API token scope** — the placeholder `database_id` in `wrangler.jsonc` is filled in
+    at deploy time by `scripts/d1-setup.mjs`, so there is nothing to paste. The one thing
+    to check is that `CLOUDFLARE_API_TOKEN` carries **D1:Edit** as well as Workers
+    Scripts:Edit, or that step fails. See below.
 
 ## Accounts and the member portal
 
@@ -138,30 +162,45 @@ which currently says the portal is coming soon. Accounts live in **Cloudflare D1
 
 ### Setting it up
 
-The Worker reads `env.Cypher_Bind`, so the `binding` in `wrangler.jsonc` must stay
-`Cypher_Bind` and match the binding name on the database in the Cloudflare dashboard.
-Rename it in both places together or not at all.
+Nothing to do by hand. `scripts/d1-setup.mjs` runs before every deploy — as the `predeploy`
+hook on `npm run deploy`, and as the **Prepare D1** step in CI — and it:
 
-For a database that already exists, copy its name and id into `wrangler.jsonc`:
+1. asks Cloudflare which D1 databases the account has;
+2. picks the one this Worker should use;
+3. writes that name and id into `wrangler.jsonc` in the working copy;
+4. applies any migrations that have not run yet.
+
+Step 3 edits the checkout. CI throws that away when the job ends, so **the placeholder stays
+in the repo on purpose** and the real id is filled in at deploy time. Run it locally
+(`npm run db:setup`) and the edit is a genuine change you can commit if you'd rather pin it.
+
+How step 2 chooses:
+
+| Situation | What happens |
+| --- | --- |
+| A database matches `database_name` | Used |
+| The account has none at all | One is created with that name |
+| The account has exactly one, and the config still holds the placeholder id | That one is adopted, and the script says so in the log |
+| The account has several and none match | Fails, listing them, and asks for `D1_DATABASE_NAME` |
+
+Set `D1_DATABASE_NAME` (env var locally, repository variable in CI) to pin a specific
+database and skip the guessing.
+
+The Worker reads `env.Cypher_Bind`, so the `binding` in `wrangler.jsonc` has to match the
+binding name on the database in the Cloudflare dashboard. The script never touches
+`binding` — rename it in both places together or not at all.
+
+Local development needs none of this: `npm run dev` runs the same script with `--local`
+first, which builds a SQLite copy under `.wrangler/` and migrates it. No account, no id, no
+network.
+
+Doing it manually instead:
 
 ```bash
-npx wrangler d1 list                             # name + database_id
-```
-
-To create one from scratch:
-
-```bash
-npx wrangler d1 create cypherx-portal            # prints database_id → wrangler.jsonc
-```
-
-Either way, apply the schema before anyone tries to sign up:
-
-```bash
+npx wrangler d1 list                                     # name + database_id
+npx wrangler d1 create cypherx-portal                    # or make a new one
 npx wrangler d1 migrations apply <database_name> --remote
 ```
-
-Locally, the same command with `--local` builds a SQLite database under `.wrangler/`, and
-no id is needed for that.
 
 ### Schema
 

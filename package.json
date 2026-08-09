@@ -4,7 +4,11 @@
   "private": true,
   "description": "CypherX Interactive website — a brand of Spheres Hosting LLC",
   "scripts": {
+    "predev": "node scripts/d1-setup.mjs --local",
     "dev": "wrangler dev",
+    "db:setup": "node scripts/d1-setup.mjs",
+    "db:local": "node scripts/d1-setup.mjs --local",
+    "predeploy": "node scripts/d1-setup.mjs",
     "deploy": "wrangler deploy",
     "check": "wrangler deploy --dry-run"
   },
