@@ -81,9 +81,13 @@ One optional repository **variable**:
 | --- | --- |
 | `D1_DATABASE_NAME` | The account has several D1 databases and the right one isn't matched by the name in `wrangler.jsonc` |
 
-Note the workflow triggers on `main`, which is not currently the repository's default
-branch — pushes to the default branch do not deploy. Change the trigger or the default
-branch, whichever you meant.
+The workflow deploys on a push to **whichever branch is currently the repository default**.
+It listens on `main` and `claude/cypherx-interactive-website-ezjwrn` (the default today) and
+the job itself checks `github.event.repository.default_branch`, so a push to the non-default
+one is a no-op. Switch the default to `main` later and deploys follow it with no edit here;
+rename it to something else and add that name to the trigger list.
+
+`workflow_dispatch` ignores all of that, so a manual run deploys from wherever you launch it.
 
 The Worker is named `cypherx-interactive` (change `name` in `wrangler.jsonc` if you want a
 different `*.workers.dev` subdomain). To serve it on a real domain, add a route or custom

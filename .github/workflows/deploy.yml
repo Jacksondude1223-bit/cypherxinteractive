@@ -2,7 +2,14 @@ name: Deploy to Cloudflare Workers
 
 on:
   push:
-    branches: [main]
+    # Both are listed because the repository's default branch is currently
+    # claude/cypherx-interactive-website-ezjwrn, not main. The job condition
+    # below is what actually decides, so whichever of these is the default
+    # branch at the time is the one that deploys — switch the default to main
+    # later and this keeps working with no edit here.
+    branches:
+      - main
+      - claude/cypherx-interactive-website-ezjwrn
   workflow_dispatch:
 
 concurrency:
@@ -11,6 +18,12 @@ concurrency:
 
 jobs:
   deploy:
+    # A push to a listed branch that is not the default branch is a no-op.
+    # workflow_dispatch always runs, so a manual deploy from anywhere is still
+    # possible.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
