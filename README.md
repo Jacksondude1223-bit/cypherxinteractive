@@ -58,28 +58,25 @@ start from an empty one.
 npm run deploy       # d1-setup, then wrangler deploy
 ```
 
-Use the npm script rather than `npx wrangler deploy`. The `predeploy` hook runs
-`scripts/d1-setup.mjs`, which points the config at the real D1 database and applies any
-pending migrations first. Calling wrangler directly skips that and deploys the placeholder
-id, which fails with `D1 binding … references database '00000000-…' which was not found`.
+`wrangler.jsonc` holds the real `database_id`, so a plain `npx wrangler deploy` works.
+`npm run deploy` is still better: its `predeploy` hook runs `scripts/d1-setup.mjs`, which
+re-checks the database and applies any migrations that have not run.
 
-This cannot be solved with wrangler's `build.command`, which is the obvious place to reach
-for. Wrangler parses `wrangler.jsonc` **before** it runs the build command, so a build step
-that rewrites the file has no effect on the deploy it is part of — verified, not assumed.
-The build command is therefore only a preflight check that fails early, in CI, with a
-message explaining what to do.
+Wrangler's `build.command` is the obvious place to put that and does not work. Wrangler
+parses `wrangler.jsonc` **before** it runs the build command, so a build step that rewrites
+the file has no effect on the deploy it is part of — verified by rewriting `database_name`
+from a build command and watching the deploy use the old value anyway. The build command is
+therefore only a preflight that fails early, in CI, if the id is ever a placeholder again.
 
 ### Cloudflare Workers Builds
 
 The repository is also connected to **Workers Builds**, Cloudflare's own CI, which builds on
-push and runs whatever is in its deploy command. That command must be:
+push and runs whatever is in its deploy command — `npx wrangler deploy` by default.
 
-```
-npm run deploy
-```
-
-not `npx wrangler deploy`. Change it under Workers &amp; Pages → the Worker → Settings → Build.
-With the default command the D1 setup never runs and every deploy fails on the placeholder.
+That works now the real `database_id` is committed, and the Worker creates its own tables on
+first use, so nothing is left dangling. Changing the deploy command to `npm run deploy` is
+still worth doing: it re-resolves the database and applies migrations on every build, which
+is what you want the day a second migration exists.
 
 The Worker's `name` in `wrangler.jsonc` also has to match the Workers Builds project
 (`cypherxinteractive`), or each build logs `Failed to match Worker name` and silently
@@ -180,10 +177,10 @@ week. If you add a hashing build step, raise the CSS/JS values.
    a visible template notice. Have them reviewed by a qualified legal adviser before you
    remove that notice. They do not yet mention accounts; the signup page tells people we
    store an email address and a password hash, and the notice should say the same.
-10. **Deploy command** — whichever CI deploys this has to run `npm run deploy`, not
-    `npx wrangler deploy`, or the D1 setup is skipped and the deploy fails on the
-    placeholder `database_id`. For Workers Builds that is a field in the dashboard. The
-    API token also needs **D1:Edit** alongside Workers Scripts:Edit. See below.
+10. **Two CI systems deploy this repo** — Workers Builds and `.github/workflows/deploy.yml`
+    will both fire on a push to the default branch and race to publish the same Worker.
+    Turn one off. If you keep the GitHub one, its API token needs **D1:Edit** alongside
+    Workers Scripts:Edit. See below.
 
 ## Accounts and the member portal
 
@@ -231,6 +228,22 @@ npx wrangler d1 list                                     # name + database_id
 npx wrangler d1 create cypherx-portal                    # or make a new one
 npx wrangler d1 migrations apply <database_name> --remote
 ```
+
+### The schema looks after itself
+
+A plain `wrangler deploy` never runs `d1 migrations apply`, so a freshly created database
+would answer the first signup with `no such table: users`. To close that gap the Worker
+imports `migrations/0001_create_users_and_sessions.sql` as text (the `Text` rule in
+`wrangler.jsonc`) and runs it once per isolate before the first account query. Every
+statement is `CREATE … IF NOT EXISTS`, so it is a no-op against a migrated database, and
+`d1 migrations apply` still works normally on top.
+
+Importing the migration rather than repeating the DDL in JavaScript means the runtime
+schema and the migration cannot drift.
+
+**This safety net covers `0001` only.** Add a `0002` and the Worker will not apply it — that
+one needs `npm run deploy` (or `npx wrangler d1 migrations apply <name> --remote`) to reach
+production.
 
 ### Schema
 

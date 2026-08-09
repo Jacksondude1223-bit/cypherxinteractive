@@ -15,6 +15,10 @@
  * to the browser.
  */
 
+// Imported as text (see the Text rule in wrangler.jsonc). Same file that
+// `wrangler d1 migrations apply` runs, so the two cannot drift apart.
+import SCHEMA from "../migrations/0001_create_users_and_sessions.sql";
+
 import {
   clearedSessionCookie,
   createSession,
@@ -270,6 +274,13 @@ async function handleAuth(request, env, url, path) {
     return json({ error: "Accounts are not configured yet" }, 503);
   }
 
+  try {
+    await ensureSchema(env.Cypher_Bind);
+  } catch (err) {
+    console.error("could not ensure the accounts schema", err);
+    return json({ error: "Accounts are not available right now" }, 503);
+  }
+
   if (path === "/api/auth/me") {
     if (request.method !== "GET") {
       return json({ error: "Method not allowed" }, 405, { Allow: "GET" });
@@ -405,6 +416,40 @@ async function withSession(db, userId, request, url, body) {
     request.headers.get("User-Agent")
   );
   return json(body, 200, { "Set-Cookie": sessionCookie(token, maxAge, url) });
+}
+
+/**
+ * Creates the tables if they are not there yet.
+ *
+ * `wrangler d1 migrations apply` is the proper way to do this, but a plain
+ * `wrangler deploy` never runs it, so a fresh database would answer the first
+ * signup with "no such table: users". Every statement in the migration is
+ * CREATE … IF NOT EXISTS, so running it against an already-migrated database
+ * is a no-op and running it twice is harmless.
+ *
+ * The result is cached per isolate, so this costs one batched query on the
+ * first account request an isolate handles and nothing afterwards. A failure
+ * clears the cache so the next request tries again instead of being stuck.
+ */
+let schemaReady = null;
+
+function ensureSchema(db) {
+  if (!schemaReady) {
+    schemaReady = applySchema(db).catch((err) => {
+      schemaReady = null;
+      throw err;
+    });
+  }
+  return schemaReady;
+}
+
+async function applySchema(db) {
+  const statements = SCHEMA.replace(/--[^\n]*/g, "")
+    .split(";")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  await db.batch(statements.map((sql) => db.prepare(sql)));
 }
 
 /** Resolves the session without exploding when D1 isn't bound yet. */
