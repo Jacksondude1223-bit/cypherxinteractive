@@ -8,13 +8,34 @@
   // practice POST /api/contact.
   "main": "src/index.js",
 
-  // Per-IP throttle for the contact endpoint. Without it the form is an open
-  // relay into the Discord channel.
+  // Per-IP throttles. Without CONTACT_LIMITER the form is an open relay into
+  // the Discord channel; without AUTH_LIMITER /api/auth/login is a
+  // password-guessing machine.
   "ratelimits": [
     {
       "name": "CONTACT_LIMITER",
       "namespace_id": "1001",
       "simple": { "limit": 5, "period": 60 }
+    },
+    {
+      "name": "AUTH_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 10, "period": 60 }
+    }
+  ],
+
+  // Accounts for the member portal.
+  //
+  // database_id below is a PLACEHOLDER and `wrangler deploy` will fail until
+  // it is replaced. Create the database and paste the id it prints:
+  //   npx wrangler d1 create cypherx-portal
+  //   npx wrangler d1 migrations apply cypherx-portal --remote
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cypherx-portal",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
     }
   ],
 
@@ -27,10 +48,30 @@
 
     // Serve public/404.html (with a 404 status) for paths that match no asset.
     // Use "single-page-application" instead only if this ever becomes a SPA.
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
 
     // html_handling defaults to "auto-trailing-slash", so /games and
     // /games.html both resolve to public/games.html.
+
+    // Without this the asset server would hand public/portal.html to anyone
+    // who asked, signed in or not, because assets are matched before the
+    // Worker runs. /login and /signup are here so a signed-in visitor is
+    // redirected server-side instead of seeing the form flash first.
+    //
+    // This list is an allowlist, not an addition: once it is set, ONLY these
+    // paths reach the Worker. /api/* has to be named explicitly or the asset
+    // server answers the endpoints itself — 405 on POST, and the 404 page on
+    // GET, because of not_found_handling above.
+    "run_worker_first": [
+      "/api/*",
+      "/portal",
+      "/portal.html",
+      "/portal/*",
+      "/login",
+      "/login.html",
+      "/signup",
+      "/signup.html"
+    ]
   },
 
   "observability": {

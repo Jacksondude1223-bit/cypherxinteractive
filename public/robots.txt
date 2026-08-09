@@ -2,4 +2,10 @@ User-agent: *
 Allow: /
 Disallow: /404
 
+# Account pages. Nothing here is useful to a crawler and the portal needs a
+# session anyway; the pages also carry a noindex meta tag.
+Disallow: /login
+Disallow: /signup
+Disallow: /portal
+
 Sitemap: https://cypherxinteractive.com/sitemap.xml

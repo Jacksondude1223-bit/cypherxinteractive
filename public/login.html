@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in — CypherX Interactive</title>
+<meta name="description" content="Sign in to your CypherX Interactive account.">
+<meta name="theme-color" content="#05070d">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://cypherxinteractive.com/login">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="brand" href="/" aria-label="CypherX Interactive home">
+      <img class="brand__mark" src="/assets/img/logo-mark.svg" alt="" width="32" height="32">
+      <span>
+        <span class="brand__name">Cypher<em>X</em> Interactive</span>
+        <span class="brand__sub">Spheres Hosting LLC</span>
+      </span>
+    </a>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Toggle navigation"><span></span></button>
+    <ul class="nav__links" id="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/games">Games</a></li>
+      <li><a href="/axiom">AXIOM</a></li>
+      <li><a href="/updates">Devlog</a></li>
+      <li><a href="/studio">Studio</a></li>
+      <li><a href="/contact">Contact</a></li>
+      <li class="nav__cta"><a class="btn btn--primary btn--sm" href="/signup">Create account</a></li>
+    </ul>
+  </div>
+</header>
+
+<main id="main">
+  <section class="auth">
+    <div class="bg-grid"></div>
+    <div class="bg-orb bg-orb--cyan"></div>
+    <div class="bg-orb bg-orb--violet"></div>
+
+    <div class="wrap auth__inner">
+      <div class="auth__head">
+        <h1>Sign <span class="gradient-text">in</span>.</h1>
+        <p>Your CypherX account. The portal is still being built, so there isn't much behind this door yet.</p>
+      </div>
+
+      <div class="auth__card">
+        <!-- Posts same-origin to the Worker, which sets an HttpOnly session
+             cookie. No token ever touches JavaScript. -->
+        <form class="form" data-auth-form data-endpoint="/api/auth/login" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email"
+                   placeholder="you@example.com" required autofocus>
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password"
+                   autocomplete="current-password" placeholder="Your password" required>
+          </div>
+
+          <p class="form__status" role="status" aria-live="polite"></p>
+
+          <button class="btn btn--primary btn--block" type="submit">Sign in</button>
+        </form>
+      </div>
+
+      <p class="auth__alt">
+        No account yet? <a href="/signup">Create one</a>.
+      </p>
+      <p class="auth__alt" style="margin-top:.6rem;font-size:.82rem;color:var(--text-dim)">
+        Forgotten your password? Email
+        <a href="mailto:support@cypherxinteractive.com" style="color:var(--text-dim);text-decoration:underline">support@cypherxinteractive.com</a>
+        for now — self-service resets are on the list.
+      </p>
+    </div>
+  </section>
+</main>
+
+<script src="/assets/js/main.js" defer></script>
+<script src="/assets/js/auth.js" defer></script>
+</body>
+</html>
