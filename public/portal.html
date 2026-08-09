@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal — CypherX Interactive</title>
+<meta name="description" content="The CypherX Interactive member portal.">
+<meta name="theme-color" content="#05070d">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<!--
+  Served by the Worker, not straight off the asset server: assets.run_worker_first
+  in wrangler.jsonc routes /portal through src/index.js, which checks the session
+  first and redirects to /login when there isn't one.
+
+  The account-email placeholder comment further down is replaced with the
+  signed-in account before the page is sent, so no personal data is baked into
+  a cacheable asset. Keep it exactly as it is written, and don't repeat the
+  literal anywhere above it — the Worker substitutes the first match.
+-->
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="brand" href="/" aria-label="CypherX Interactive home">
+      <img class="brand__mark" src="/assets/img/logo-mark.svg" alt="" width="32" height="32">
+      <span>
+        <span class="brand__name">Cypher<em>X</em> Interactive</span>
+        <span class="brand__sub">Spheres Hosting LLC</span>
+      </span>
+    </a>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Toggle navigation"><span></span></button>
+    <ul class="nav__links" id="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/games">Games</a></li>
+      <li><a href="/axiom">AXIOM</a></li>
+      <li><a href="/updates">Devlog</a></li>
+      <li><a href="/portal" aria-current="page">Portal</a></li>
+      <li class="nav__cta"><button class="btn btn--ghost btn--sm" type="button" data-logout>Sign out</button></li>
+    </ul>
+  </div>
+</header>
+
+<main id="main">
+  <section class="section">
+    <div class="wrap">
+
+      <div class="portal__head">
+        <div>
+          <p class="eyebrow">Member portal</p>
+          <h1 style="font-size:clamp(1.8rem,4.4vw,2.6rem)">Welcome back.</h1>
+        </div>
+        <p class="portal__who">Signed in as <b><!--account-email--></b></p>
+      </div>
+
+      <div class="portal__soon">
+        <div class="bg-orb bg-orb--cyan"></div>
+        <div class="bg-orb bg-orb--violet"></div>
+        <span class="tag tag--soon"><i class="dot"></i> Coming soon</span>
+        <h2 style="margin-top:1.2rem">There's nothing here yet.</h2>
+        <p>
+          The portal is being built. When it's ready this is where you'll find your
+          linked Roblox account, your purchase and reward history, ban appeal status,
+          and early access to playtests.
+        </p>
+        <p style="margin-top:1rem">
+          Your account is saved, so you won't need to do this again. We'll email you
+          when there's something worth signing in for.
+        </p>
+        <div class="cta__actions" style="margin-top:2rem">
+          <a class="btn btn--primary" href="/updates">Read the devlog</a>
+          <a class="btn btn--ghost" href="https://discord.gg/" rel="noopener">Join the Discord</a>
+        </div>
+      </div>
+
+      <div class="grid grid--3" style="margin-top:1.5rem">
+        <article class="card">
+          <div class="card__num">01 / PLANNED</div>
+          <h3>Link your Roblox account</h3>
+          <p>Tie this account to your in-game profile so support and appeals stop needing a username typed from memory.</p>
+        </article>
+        <article class="card">
+          <div class="card__num">02 / PLANNED</div>
+          <h3>Appeal tracking</h3>
+          <p>See where an appeal has got to, and the evidence AXIOM recorded, without waiting on an email.</p>
+        </article>
+        <article class="card">
+          <div class="card__num">03 / PLANNED</div>
+          <h3>Playtest invites</h3>
+          <p>Opt in to early builds. Unfinished, occasionally broken, usually more interesting for it.</p>
+        </article>
+      </div>
+
+      <p class="form__note" style="margin-top:2rem">
+        Want the account gone? Email
+        <a href="mailto:support@cypherxinteractive.com" style="color:var(--cyan)">support@cypherxinteractive.com</a>
+        and we'll delete it and everything attached to it.
+      </p>
+
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer__bar" style="border-top:0;margin-top:0">
+      <p>&copy; <span data-year>2026</span> Spheres Hosting LLC. CypherX Interactive is a brand of Spheres Hosting LLC. Not affiliated with or endorsed by Roblox Corporation.</p>
+      <nav aria-label="Legal">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/contact">Contact</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/js/main.js" defer></script>
+<script src="/assets/js/auth.js" defer></script>
+</body>
+</html>

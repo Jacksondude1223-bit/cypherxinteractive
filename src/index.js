@@ -1,14 +1,35 @@
 /**
  * CypherX Interactive — Worker entrypoint.
  *
- * Static assets are served before this script runs, so page loads never invoke
- * it. Only paths with no matching asset reach `fetch` — in practice
- * POST /api/contact, which relays the contact form into Discord.
+ * Static assets are normally served before this script runs, so ordinary page
+ * loads never invoke it. Two kinds of request do reach `fetch`:
+ *
+ *   - /api/*, which has no matching asset: the contact relay and the account
+ *     endpoints.
+ *   - the paths listed under assets.run_worker_first in wrangler.jsonc
+ *     (/portal, /login, /signup), where the Worker has to see the request
+ *     before the asset server hands the file over.
  *
  * A Discord webhook URL is a credential: anyone who holds it can post to the
  * channel until it is rotated. They live in Worker secrets and are never sent
  * to the browser.
  */
+
+import {
+  clearedSessionCookie,
+  createSession,
+  currentUser,
+  destroySession,
+  emailProblem,
+  hashPassword,
+  isStaleHash,
+  NAME_MAX,
+  normaliseEmail,
+  nowSeconds,
+  passwordProblem,
+  sessionCookie,
+  verifyPassword,
+} from "./auth.js";
 
 const ENDPOINT = "/api/contact";
 
@@ -59,9 +80,22 @@ const DEFAULT_COLOR = 0x29e0f0;
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const path = url.pathname.replace(/\.html$/, "").replace(/(.)\/$/, "$1");
 
-    if (url.pathname === ENDPOINT) {
-      return handleContact(request, env);
+    if (path === ENDPOINT) return handleContact(request, env);
+
+    if (path.startsWith("/api/auth/")) return handleAuth(request, env, url, path);
+
+    // Gated page. The asset exists, so without run_worker_first the asset
+    // server would hand it over before this ran.
+    if (path === "/portal") return handlePortal(request, env, url);
+
+    // Signed-in visitors have no use for these two.
+    if (path === "/login" || path === "/signup") {
+      if (await maybeUser(request, env)) {
+        return Response.redirect(new URL("/portal", url).toString(), 302);
+      }
+      return env.ASSETS.fetch(request);
     }
 
     // Everything else is a static asset. Going through the binding keeps
@@ -77,19 +111,10 @@ async function handleContact(request, env) {
     return json({ error: "Method not allowed" }, 405, { Allow: "POST" });
   }
 
-  // Cheap cross-origin block. The form is same-origin, so a missing or
-  // foreign Origin is either a bot or someone else's page posting for us.
-  const origin = request.headers.get("Origin");
-  if (origin) {
-    let originHost;
-    try {
-      originHost = new URL(origin).host;
-    } catch {
-      return json({ error: "Bad origin" }, 403);
-    }
-    if (originHost !== new URL(request.url).host) {
-      return json({ error: "Bad origin" }, 403);
-    }
+  // Cheap cross-origin block. The form is same-origin, so a foreign Origin is
+  // either a bot or someone else's page posting for us.
+  if (!sameOrigin(request, new URL(request.url))) {
+    return json({ error: "Bad origin" }, 403);
   }
 
   const fields = await readFields(request);
@@ -231,6 +256,215 @@ function isUsableWebhook(raw, binding) {
   return true;
 }
 
+/* ------------------------------------------------------------------ *
+ * Accounts
+ * ------------------------------------------------------------------ */
+
+async function handleAuth(request, env, url, path) {
+  if (!env.DB) {
+    console.error(
+      "No DB binding. Add the d1_databases entry to wrangler.jsonc and create " +
+        "the database. Bindings visible to this Worker: " +
+        (Object.keys(env).join(", ") || "(none)")
+    );
+    return json({ error: "Accounts are not configured yet" }, 503);
+  }
+
+  if (path === "/api/auth/me") {
+    if (request.method !== "GET") {
+      return json({ error: "Method not allowed" }, 405, { Allow: "GET" });
+    }
+    const user = await currentUser(request, env.DB);
+    return user
+      ? json({ user: { email: user.email, displayName: user.displayName } })
+      : json({ user: null }, 401);
+  }
+
+  if (request.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405, { Allow: "POST" });
+  }
+  if (!sameOrigin(request, url)) {
+    return json({ error: "Bad origin" }, 403);
+  }
+
+  switch (path) {
+    case "/api/auth/signup":
+      return handleSignup(request, env, url);
+    case "/api/auth/login":
+      return handleLogin(request, env, url);
+    case "/api/auth/logout":
+      return handleLogout(request, env, url);
+    default:
+      return json({ error: "Not found" }, 404);
+  }
+}
+
+async function handleSignup(request, env, url) {
+  const fields = await readFields(request);
+  if (!fields) return json({ error: "Could not read the submission" }, 400);
+
+  // Same honeypot as the contact form. Bots fill every field they can see.
+  if (fields.company) return json({ ok: true, redirect: "/portal" });
+
+  const email = normaliseEmail(fields.email);
+  const password = typeof fields.password === "string" ? fields.password : "";
+  const displayName = clamp(fields.name, NAME_MAX);
+
+  const problem = emailProblem(email) || passwordProblem(password);
+  if (problem) return json({ error: problem }, 400);
+
+  const limited = await isRateLimited(request, env, env.AUTH_LIMITER);
+  if (limited) {
+    return json({ error: "Too many attempts. Try again shortly." }, 429, {
+      "Retry-After": "60",
+    });
+  }
+
+  const id = crypto.randomUUID();
+  const passwordHash = await hashPassword(password);
+
+  try {
+    await env.DB.prepare(
+      `INSERT INTO users (id, email, password_hash, display_name, created_at)
+       VALUES (?, ?, ?, ?, ?)`
+    )
+      .bind(id, email, passwordHash, displayName || null, nowSeconds())
+      .run();
+  } catch (err) {
+    // UNIQUE(email). Anything else is a genuine fault worth surfacing in logs.
+    if (String(err).includes("UNIQUE")) {
+      return json({ error: "There's already an account with that email." }, 409);
+    }
+    console.error("signup insert failed", err);
+    return json({ error: "Could not create the account" }, 500);
+  }
+
+  return withSession(env.DB, id, request, url, { ok: true, redirect: "/portal" });
+}
+
+async function handleLogin(request, env, url) {
+  const fields = await readFields(request);
+  if (!fields) return json({ error: "Could not read the submission" }, 400);
+
+  const email = normaliseEmail(fields.email);
+  const password = typeof fields.password === "string" ? fields.password : "";
+
+  if (!email || !password) {
+    return json({ error: "Enter your email and password." }, 400);
+  }
+
+  const limited = await isRateLimited(request, env, env.AUTH_LIMITER);
+  if (limited) {
+    return json({ error: "Too many attempts. Try again shortly." }, 429, {
+      "Retry-After": "60",
+    });
+  }
+
+  const row = await env.DB.prepare(
+    "SELECT id, password_hash FROM users WHERE email = ?"
+  )
+    .bind(email)
+    .first();
+
+  // verifyPassword derives a hash either way, so an unknown address takes the
+  // same time as a wrong password and the reply is identical.
+  const ok = await verifyPassword(password, row ? row.password_hash : "");
+  if (!row || !ok) {
+    return json({ error: "That email and password don't match an account." }, 401);
+  }
+
+  await env.DB.prepare("UPDATE users SET last_login_at = ? WHERE id = ?")
+    .bind(nowSeconds(), row.id)
+    .run();
+
+  // Cheap moment to re-hash at the current cost, now that the plaintext is here.
+  if (isStaleHash(row.password_hash)) {
+    try {
+      await env.DB.prepare("UPDATE users SET password_hash = ? WHERE id = ?")
+        .bind(await hashPassword(password), row.id)
+        .run();
+    } catch (err) {
+      console.error("password rehash failed", err); // Not worth failing the login.
+    }
+  }
+
+  return withSession(env.DB, row.id, request, url, { ok: true, redirect: "/portal" });
+}
+
+async function handleLogout(request, env, url) {
+  await destroySession(request, env.DB);
+  return json({ ok: true, redirect: "/" }, 200, {
+    "Set-Cookie": clearedSessionCookie(url),
+  });
+}
+
+async function withSession(db, userId, request, url, body) {
+  const { token, maxAge } = await createSession(
+    db,
+    userId,
+    request.headers.get("User-Agent")
+  );
+  return json(body, 200, { "Set-Cookie": sessionCookie(token, maxAge, url) });
+}
+
+/** Resolves the session without exploding when D1 isn't bound yet. */
+async function maybeUser(request, env) {
+  if (!env.DB) return null;
+  try {
+    return await currentUser(request, env.DB);
+  } catch (err) {
+    console.error("session lookup failed", err);
+    return null;
+  }
+}
+
+/**
+ * Serves the portal to signed-in visitors and bounces everyone else to the
+ * sign-in page. The account's email is stitched into the HTML here rather than
+ * fetched by the page, so nothing personal sits in a cacheable asset.
+ */
+async function handlePortal(request, env, url) {
+  const user = await maybeUser(request, env);
+  if (!user) {
+    return Response.redirect(new URL("/login?next=/portal", url).toString(), 302);
+  }
+
+  const asset = await env.ASSETS.fetch(new URL("/portal", url));
+  if (!asset.ok) return asset;
+
+  const html = (await asset.text()).replace(
+    "<!--account-email-->",
+    escapeHtml(user.displayName || user.email)
+  );
+
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      // Signed-in HTML must never sit in a shared cache.
+      "Cache-Control": "private, no-store",
+    },
+  });
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function sameOrigin(request, url) {
+  const origin = request.headers.get("Origin");
+  if (!origin) return true; // No Origin at all is not a cross-site post.
+  try {
+    return new URL(origin).host === url.host;
+  } catch {
+    return false;
+  }
+}
+
 /* ------------------------------------------------------------------ */
 
 /** Accepts multipart/form-data (what the page sends) or JSON. */
@@ -255,15 +489,16 @@ function clamp(value, max) {
 }
 
 /**
- * Per-IP throttle. Without one this endpoint is an open relay into the
- * Discord channel. The binding is optional so the Worker still runs locally
- * and in dev without it — but it should be configured in production.
+ * Per-IP throttle. Without one the contact endpoint is an open relay into the
+ * Discord channel and the login endpoint is a password-guessing machine. The
+ * bindings are optional so the Worker still runs locally and in dev without
+ * them — but both should be configured in production.
  */
-async function isRateLimited(request, env) {
-  if (!env.CONTACT_LIMITER) return false;
+async function isRateLimited(request, env, limiter = env.CONTACT_LIMITER) {
+  if (!limiter) return false;
   const ip = request.headers.get("CF-Connecting-IP") || "anonymous";
   try {
-    const { success } = await env.CONTACT_LIMITER.limit({ key: ip });
+    const { success } = await limiter.limit({ key: ip });
     return !success;
   } catch (err) {
     // Never let the limiter failing take the form down with it.

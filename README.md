@@ -14,13 +14,19 @@ step, no framework, no tracking.
 ├── public/                 # everything served to the browser
 │   ├── index.html · games.html · axiom.html · updates.html
 │   ├── studio.html · contact.html
+│   ├── login.html · signup.html · portal.html
 │   ├── privacy.html · terms.html · 404.html
 │   ├── _headers            # security + cache headers
 │   ├── robots.txt · sitemap.xml
 │   └── assets/
 │       ├── css/style.css   # design tokens + all components
-│       ├── js/main.js      # nav, scroll reveal, counters, form
+│       ├── js/main.js      # nav, scroll reveal, counters, contact form
+│       ├── js/auth.js      # sign in / create account / sign out
 │       └── img/            # logo mark, favicon, key art (SVG)
+├── src/
+│   ├── index.js            # Worker: routing, contact relay, account endpoints
+│   └── auth.js             # password hashing, sessions, validation
+├── migrations/             # D1 schema, applied with wrangler d1 migrations
 ├── wrangler.jsonc          # Worker config
 ├── package.json
 └── .github/workflows/deploy.yml
@@ -33,10 +39,14 @@ stays out of the deployed bundle.
 
 ```bash
 npm install
+npx wrangler d1 migrations apply cypherx-portal --local   # once, creates the local DB
 npm run dev          # wrangler dev — serves on http://localhost:8787
 ```
 
 `npm run check` runs `wrangler deploy --dry-run` to validate config without publishing.
+
+The local D1 database lives in `.wrangler/` and is gitignored. Delete that directory to
+start from an empty one.
 
 ## Deploying
 
@@ -64,6 +74,20 @@ tags and the sitemap use the canonical form, so navigation never takes a redirec
 
 `not_found_handling: "404-page"` means any unmatched path serves `public/404.html` with a
 proper 404 status.
+
+### run_worker_first is an allowlist
+
+`assets.run_worker_first` in `wrangler.jsonc` lists the paths that reach the Worker before
+the asset server gets a look:
+
+```
+/api/*  /portal  /portal.html  /portal/*  /login  /login.html  /signup  /signup.html
+```
+
+Once that array exists it is the **whole** list — everything else is served straight off
+the asset server. `/api/*` has to be in it or the endpoints stop working in a way that
+looks like a routing bug: `405` on POST, and the 404 page on GET, both from the asset
+server rather than from `src/index.js`. Add any future API path or gated page here.
 
 ## Headers
 
@@ -101,7 +125,100 @@ week. If you add a hashing build step, raise the CSS/JS values.
    to `assets/img/og-cover.png` and update the `og:image` tags.
 9. **Legal pages** — `privacy.html` and `terms.html` are drafting starting points and carry
    a visible template notice. Have them reviewed by a qualified legal adviser before you
-   remove that notice.
+   remove that notice. They do not yet mention accounts; the signup page tells people we
+   store an email address and a password hash, and the notice should say the same.
+10. **D1 `database_id`** — `wrangler.jsonc` ships a placeholder, and **`wrangler deploy`
+    fails until it is replaced**, including the CI deploy. Run `npx wrangler d1 create
+    cypherx-portal`, paste the id it prints, then apply the migrations. See below.
+
+## Accounts and the member portal
+
+Visitors can create an account at `/signup`, sign in at `/login`, and reach `/portal`,
+which currently says the portal is coming soon. Accounts live in **Cloudflare D1**.
+
+### Setting it up
+
+```bash
+npx wrangler d1 create cypherx-portal            # prints database_id → wrangler.jsonc
+npx wrangler d1 migrations apply cypherx-portal --remote
+```
+
+Locally, the same command with `--local` builds a SQLite database under `.wrangler/`.
+
+### Schema
+
+`migrations/0001_create_users_and_sessions.sql` creates two tables:
+
+| Table | Holds |
+| --- | --- |
+| `users` | uuid, email (lowercased, unique), password hash, optional display name, timestamps |
+| `sessions` | SHA-256 of the session token, user id, created/expires, truncated user agent |
+
+### How a session works
+
+Signing up or in creates a row in `sessions` and sets a cookie:
+
+```
+cx_session=<random 32 bytes>; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000
+```
+
+Only the SHA-256 of that token is stored, so a database read does not hand anyone a live
+session. Because sessions are rows rather than signed cookies, signing out actually ends
+the session and any session can be revoked with a `DELETE`. Expired rows are cleaned up
+whenever they are next looked at, so no cron job is needed. `Secure` is omitted on
+`http://localhost` only, because Chrome refuses to store a Secure cookie there.
+
+### Passwords
+
+PBKDF2-HMAC-SHA256 via WebCrypto, 100,000 iterations, 16-byte salt, stored as
+`pbkdf2$<iterations>$<salt>$<hash>`. Workers has no bcrypt, scrypt or argon2, so this is
+the strongest option available in the runtime.
+
+**Cost:** one verification measures ~55 ms of CPU on the dev machine. The Workers **free**
+plan caps CPU at 10 ms per invocation, so sign-in will exceed it there; Workers Paid
+defaults to 30 s and has plenty of room. If you must stay on the free plan, lower
+`PBKDF2_ITERATIONS` in `src/auth.js` and accept the weaker hash.
+
+The iteration count is stored inside each hash, so raising it later is safe: old hashes
+still verify, and `isStaleHash()` triggers a re-hash at the next successful sign-in.
+
+### Endpoints
+
+| Route | Method | Behaviour |
+| --- | --- | --- |
+| `/api/auth/signup` | POST | Creates the account, signs in. `409` if the email is taken |
+| `/api/auth/login` | POST | `401` on a bad pair, with wording that does not say which half was wrong |
+| `/api/auth/logout` | POST | Deletes the session row and clears the cookie |
+| `/api/auth/me` | GET | `{ user }` or `401` |
+| `/portal` | GET | Redirects to `/login?next=/portal` without a session |
+
+Shared guards: `403` on a cross-origin POST, `429` past 10 attempts per IP per minute
+(`AUTH_LIMITER`), `503` when the `DB` binding is absent, and the same honeypot the contact
+form uses.
+
+A login for an address with no account still runs the full key derivation against a dummy
+hash, so timing does not reveal which emails are registered. Measured across four attempts
+each: 58 ms unknown, 60 ms known.
+
+Signup does say when an email is already registered. That leaks membership, and the
+alternative — accepting the signup silently and sending a "you already have an account"
+email — needs an email provider this project does not have yet. Worth revisiting alongside
+password resets.
+
+### The portal page is not a public asset
+
+`public/portal.html` would be served to anyone who asked for it if the asset server saw
+the request first, so `/portal` is in `run_worker_first` and `src/index.js` checks the
+session before calling `env.ASSETS.fetch()`. It then substitutes the signed-in account into
+a placeholder comment in the HTML and responds `Cache-Control: private, no-store`, so
+nothing personal is ever baked into a cacheable asset. `/login` and `/signup` are on the list too, so a signed-in visitor is
+redirected to the portal server-side instead of watching the form flash first.
+
+### Not built yet
+
+Password reset, email verification, self-service account deletion, and any actual portal
+content. The sign-in page points people at `support@` for resets, and the portal points
+them at `support@` for deletion.
 
 ## Contact form → Discord
 

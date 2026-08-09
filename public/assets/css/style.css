@@ -1069,7 +1069,70 @@ p { text-wrap: pretty; }
 }
 
 /* --------------------------------------------------------------------------
-   18. Devlog entries
+   18. Account pages
+   -------------------------------------------------------------------------- */
+.auth {
+  position: relative;
+  min-height: calc(100vh - 74px);
+  display: grid;
+  place-items: center;
+  padding: clamp(2.5rem, 7vw, 5rem) 0;
+  overflow: hidden;
+}
+.auth__inner { width: 100%; max-width: 440px; }
+
+.auth__head { text-align: center; margin-bottom: 1.75rem; }
+.auth__head h1 { font-size: clamp(1.8rem, 4vw, 2.3rem); margin-bottom: 0.6rem; }
+.auth__head p { color: var(--text-muted); font-size: 0.95rem; }
+
+.auth__card {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(160deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.5rem, 4vw, 2.1rem);
+}
+
+.auth__alt {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.auth__alt a { color: var(--cyan); font-weight: 600; }
+
+/* Portal */
+.portal__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+.portal__who { font-size: 0.88rem; color: var(--text-muted); }
+.portal__who b { color: var(--text); font-weight: 600; }
+
+.portal__soon {
+  position: relative;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, var(--surface-2), var(--surface));
+  padding: clamp(2.5rem, 8vw, 5rem) clamp(1.5rem, 5vw, 3rem);
+  overflow: hidden;
+}
+.portal__soon h2 { font-size: clamp(1.8rem, 5vw, 2.8rem); margin-bottom: 1rem; }
+.portal__soon p {
+  color: var(--text-muted);
+  max-width: 52ch;
+  margin-inline: auto;
+}
+.portal__soon > * { position: relative; z-index: 1; }
+
+/* --------------------------------------------------------------------------
+   19. Devlog entries
    -------------------------------------------------------------------------- */
 .notes { display: grid; gap: 1rem; }
 
@@ -1164,7 +1227,7 @@ p { text-wrap: pretty; }
 .aside b { color: var(--text); font-weight: 600; }
 
 /* --------------------------------------------------------------------------
-   19. Utilities
+   20. Utilities
    -------------------------------------------------------------------------- */
 .visually-hidden {
   position: absolute !important;
