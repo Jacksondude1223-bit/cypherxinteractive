@@ -26,7 +26,9 @@ step, no framework, no tracking.
 ├── src/
 │   ├── index.js            # Worker: routing, contact relay, account endpoints
 │   └── auth.js             # password hashing, sessions, validation
-├── migrations/             # D1 schema, applied with wrangler d1 migrations
+├── migrations/             # D1 schema, applied by scripts/d1-setup.mjs
+├── scripts/
+│   └── d1-setup.mjs        # resolves the D1 database + migrates, pre-deploy
 ├── wrangler.jsonc          # Worker config
 ├── package.json
 └── .github/workflows/deploy.yml
@@ -39,9 +41,11 @@ stays out of the deployed bundle.
 
 ```bash
 npm install
-npx wrangler d1 migrations apply cypherx-portal --local   # once, creates the local DB
-npm run dev          # wrangler dev — serves on http://localhost:8787
+npm run dev          # creates and migrates the local D1, then serves on :8787
 ```
+
+`predev` runs `scripts/d1-setup.mjs --local` first, so a fresh clone gets a working
+database without any setup. `npm run db:local` does that part on its own.
 
 `npm run check` runs `wrangler deploy --dry-run` to validate config without publishing.
 
@@ -51,16 +55,65 @@ start from an empty one.
 ## Deploying
 
 ```bash
-npm run deploy       # wrangler deploy
+npm run deploy       # d1-setup, then wrangler deploy
 ```
+
+Use the npm script rather than `npx wrangler deploy`. The `predeploy` hook runs
+`scripts/d1-setup.mjs`, which points the config at the real D1 database and applies any
+pending migrations first. Calling wrangler directly skips that and deploys the placeholder
+id, which fails with `D1 binding … references database '00000000-…' which was not found`.
+
+This cannot be solved with wrangler's `build.command`, which is the obvious place to reach
+for. Wrangler parses `wrangler.jsonc` **before** it runs the build command, so a build step
+that rewrites the file has no effect on the deploy it is part of — verified, not assumed.
+The build command is therefore only a preflight check that fails early, in CI, with a
+message explaining what to do.
+
+### Cloudflare Workers Builds
+
+The repository is also connected to **Workers Builds**, Cloudflare's own CI, which builds on
+push and runs whatever is in its deploy command. That command must be:
+
+```
+npm run deploy
+```
+
+not `npx wrangler deploy`. Change it under Workers &amp; Pages → the Worker → Settings → Build.
+With the default command the D1 setup never runs and every deploy fails on the placeholder.
+
+The Worker's `name` in `wrangler.jsonc` also has to match the Workers Builds project
+(`cypherxinteractive`), or each build logs `Failed to match Worker name` and silently
+overrides it.
+
+**Two CI systems now deploy this repo:** Workers Builds and `.github/workflows/deploy.yml`.
+They will both fire on a push to the default branch and race each other to publish the same
+Worker. Pick one and turn the other off.
 
 Or let CI do it: `.github/workflows/deploy.yml` deploys on every push to `main`. It needs
 two repository secrets:
 
 | Secret | Value |
 | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | API token with the **Edit Cloudflare Workers** permission |
+| `CLOUDFLARE_API_TOKEN` | API token with **Edit Cloudflare Workers** and **D1:Edit** |
 | `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
+
+D1:Edit is what lets the workflow look up, and if necessary create, the database. Without
+it the Prepare D1 step fails with a permissions error from the API rather than something
+confusing later on.
+
+One optional repository **variable**:
+
+| Variable | When to set it |
+| --- | --- |
+| `D1_DATABASE_NAME` | The account has several D1 databases and the right one isn't matched by the name in `wrangler.jsonc` |
+
+The workflow deploys on a push to **whichever branch is currently the repository default**.
+It listens on `main` and `claude/cypherx-interactive-website-ezjwrn` (the default today) and
+the job itself checks `github.event.repository.default_branch`, so a push to the non-default
+one is a no-op. Switch the default to `main` later and deploys follow it with no edit here;
+rename it to something else and add that name to the trigger list.
+
+`workflow_dispatch` ignores all of that, so a manual run deploys from wherever you launch it.
 
 The Worker is named `cypherx-interactive` (change `name` in `wrangler.jsonc` if you want a
 different `*.workers.dev` subdomain). To serve it on a real domain, add a route or custom
@@ -127,9 +180,10 @@ week. If you add a hashing build step, raise the CSS/JS values.
    a visible template notice. Have them reviewed by a qualified legal adviser before you
    remove that notice. They do not yet mention accounts; the signup page tells people we
    store an email address and a password hash, and the notice should say the same.
-10. **D1 `database_id`** — `wrangler.jsonc` ships a placeholder, and **`wrangler deploy`
-    fails until it is replaced**, including the CI deploy. Run `npx wrangler d1 create
-    cypherx-portal`, paste the id it prints, then apply the migrations. See below.
+10. **Deploy command** — whichever CI deploys this has to run `npm run deploy`, not
+    `npx wrangler deploy`, or the D1 setup is skipped and the deploy fails on the
+    placeholder `database_id`. For Workers Builds that is a field in the dashboard. The
+    API token also needs **D1:Edit** alongside Workers Scripts:Edit. See below.
 
 ## Accounts and the member portal
 
@@ -138,12 +192,45 @@ which currently says the portal is coming soon. Accounts live in **Cloudflare D1
 
 ### Setting it up
 
-```bash
-npx wrangler d1 create cypherx-portal            # prints database_id → wrangler.jsonc
-npx wrangler d1 migrations apply cypherx-portal --remote
-```
+Nothing to do by hand. `scripts/d1-setup.mjs` runs before every deploy — as the `predeploy`
+hook on `npm run deploy`, and as the **Prepare D1** step in CI — and it:
 
-Locally, the same command with `--local` builds a SQLite database under `.wrangler/`.
+1. asks Cloudflare which D1 databases the account has;
+2. picks the one this Worker should use;
+3. writes that name and id into `wrangler.jsonc` in the working copy;
+4. applies any migrations that have not run yet.
+
+Step 3 edits the checkout. CI throws that away when the job ends, so **the placeholder stays
+in the repo on purpose** and the real id is filled in at deploy time. Run it locally
+(`npm run db:setup`) and the edit is a genuine change you can commit if you'd rather pin it.
+
+How step 2 chooses:
+
+| Situation | What happens |
+| --- | --- |
+| A database matches `database_name` | Used |
+| The account has none at all | One is created with that name |
+| The account has exactly one, and the config still holds the placeholder id | That one is adopted, and the script says so in the log |
+| The account has several and none match | Fails, listing them, and asks for `D1_DATABASE_NAME` |
+
+Set `D1_DATABASE_NAME` (env var locally, repository variable in CI) to pin a specific
+database and skip the guessing.
+
+The Worker reads `env.Cypher_Bind`, so the `binding` in `wrangler.jsonc` has to match the
+binding name on the database in the Cloudflare dashboard. The script never touches
+`binding` — rename it in both places together or not at all.
+
+Local development needs none of this: `npm run dev` runs the same script with `--local`
+first, which builds a SQLite copy under `.wrangler/` and migrates it. No account, no id, no
+network.
+
+Doing it manually instead:
+
+```bash
+npx wrangler d1 list                                     # name + database_id
+npx wrangler d1 create cypherx-portal                    # or make a new one
+npx wrangler d1 migrations apply <database_name> --remote
+```
 
 ### Schema
 
@@ -193,7 +280,7 @@ still verify, and `isStaleHash()` triggers a re-hash at the next successful sign
 | `/portal` | GET | Redirects to `/login?next=/portal` without a session |
 
 Shared guards: `403` on a cross-origin POST, `429` past 10 attempts per IP per minute
-(`AUTH_LIMITER`), `503` when the `DB` binding is absent, and the same honeypot the contact
+(`AUTH_LIMITER`), `503` when the `Cypher_Bind` binding is absent, and the same honeypot the contact
 form uses.
 
 A login for an address with no account still runs the full key derivation against a dummy

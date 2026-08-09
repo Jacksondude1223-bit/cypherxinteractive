@@ -1,12 +1,22 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "cypherx-interactive",
+  // Must match the Worker that Cloudflare Workers Builds deploys to, or every
+  // build logs "Failed to match Worker name" and overrides this anyway.
+  "name": "cypherxinteractive",
   "compatibility_date": "2025-01-01",
 
   // Static assets are matched before the script runs, so ordinary page loads
   // never invoke the Worker. Only unmatched paths reach src/index.js — in
   // practice POST /api/contact.
   "main": "src/index.js",
+
+  // Preflight only. wrangler parses this file before running the build
+  // command, so a build step CANNOT fix database_id for the deploy it is part
+  // of — this just turns the resulting API error into a message that says what
+  // to do. It is a no-op outside CI, so `wrangler dev` is unaffected.
+  "build": {
+    "command": "node scripts/d1-setup.mjs --preflight"
+  },
 
   // Per-IP throttles. Without CONTACT_LIMITER the form is an open relay into
   // the Discord channel; without AUTH_LIMITER /api/auth/login is a
@@ -26,13 +36,19 @@
 
   // Accounts for the member portal.
   //
-  // database_id below is a PLACEHOLDER and `wrangler deploy` will fail until
-  // it is replaced. Create the database and paste the id it prints:
-  //   npx wrangler d1 create cypherx-portal
-  //   npx wrangler d1 migrations apply cypherx-portal --remote
+  // The code reads env.Cypher_Bind, so this binding name has to match the one
+  // on the database in the Cloudflare dashboard.
+  //
+  // database_name and database_id below are PLACEHOLDERS and `wrangler deploy`
+  // will fail until they match a real database. Get both from:
+  //   npx wrangler d1 list
+  // or create one with:
+  //   npx wrangler d1 create <name>
+  // then apply the schema:
+  //   npx wrangler d1 migrations apply <name> --remote
   "d1_databases": [
     {
-      "binding": "DB",
+      "binding": "Cypher_Bind",
       "database_name": "cypherx-portal",
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations"

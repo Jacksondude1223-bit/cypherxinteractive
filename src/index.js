@@ -261,10 +261,10 @@ function isUsableWebhook(raw, binding) {
  * ------------------------------------------------------------------ */
 
 async function handleAuth(request, env, url, path) {
-  if (!env.DB) {
+  if (!env.Cypher_Bind) {
     console.error(
-      "No DB binding. Add the d1_databases entry to wrangler.jsonc and create " +
-        "the database. Bindings visible to this Worker: " +
+      "No Cypher_Bind binding. Add the d1_databases entry to wrangler.jsonc and " +
+        "create the database. Bindings visible to this Worker: " +
         (Object.keys(env).join(", ") || "(none)")
     );
     return json({ error: "Accounts are not configured yet" }, 503);
@@ -274,7 +274,7 @@ async function handleAuth(request, env, url, path) {
     if (request.method !== "GET") {
       return json({ error: "Method not allowed" }, 405, { Allow: "GET" });
     }
-    const user = await currentUser(request, env.DB);
+    const user = await currentUser(request, env.Cypher_Bind);
     return user
       ? json({ user: { email: user.email, displayName: user.displayName } })
       : json({ user: null }, 401);
@@ -324,7 +324,7 @@ async function handleSignup(request, env, url) {
   const passwordHash = await hashPassword(password);
 
   try {
-    await env.DB.prepare(
+    await env.Cypher_Bind.prepare(
       `INSERT INTO users (id, email, password_hash, display_name, created_at)
        VALUES (?, ?, ?, ?, ?)`
     )
@@ -339,7 +339,7 @@ async function handleSignup(request, env, url) {
     return json({ error: "Could not create the account" }, 500);
   }
 
-  return withSession(env.DB, id, request, url, { ok: true, redirect: "/portal" });
+  return withSession(env.Cypher_Bind, id, request, url, { ok: true, redirect: "/portal" });
 }
 
 async function handleLogin(request, env, url) {
@@ -360,7 +360,7 @@ async function handleLogin(request, env, url) {
     });
   }
 
-  const row = await env.DB.prepare(
+  const row = await env.Cypher_Bind.prepare(
     "SELECT id, password_hash FROM users WHERE email = ?"
   )
     .bind(email)
@@ -373,14 +373,14 @@ async function handleLogin(request, env, url) {
     return json({ error: "That email and password don't match an account." }, 401);
   }
 
-  await env.DB.prepare("UPDATE users SET last_login_at = ? WHERE id = ?")
+  await env.Cypher_Bind.prepare("UPDATE users SET last_login_at = ? WHERE id = ?")
     .bind(nowSeconds(), row.id)
     .run();
 
   // Cheap moment to re-hash at the current cost, now that the plaintext is here.
   if (isStaleHash(row.password_hash)) {
     try {
-      await env.DB.prepare("UPDATE users SET password_hash = ? WHERE id = ?")
+      await env.Cypher_Bind.prepare("UPDATE users SET password_hash = ? WHERE id = ?")
         .bind(await hashPassword(password), row.id)
         .run();
     } catch (err) {
@@ -388,11 +388,11 @@ async function handleLogin(request, env, url) {
     }
   }
 
-  return withSession(env.DB, row.id, request, url, { ok: true, redirect: "/portal" });
+  return withSession(env.Cypher_Bind, row.id, request, url, { ok: true, redirect: "/portal" });
 }
 
 async function handleLogout(request, env, url) {
-  await destroySession(request, env.DB);
+  await destroySession(request, env.Cypher_Bind);
   return json({ ok: true, redirect: "/" }, 200, {
     "Set-Cookie": clearedSessionCookie(url),
   });
@@ -409,9 +409,9 @@ async function withSession(db, userId, request, url, body) {
 
 /** Resolves the session without exploding when D1 isn't bound yet. */
 async function maybeUser(request, env) {
-  if (!env.DB) return null;
+  if (!env.Cypher_Bind) return null;
   try {
-    return await currentUser(request, env.DB);
+    return await currentUser(request, env.Cypher_Bind);
   } catch (err) {
     console.error("session lookup failed", err);
     return null;
