@@ -127,9 +127,9 @@ week. If you add a hashing build step, raise the CSS/JS values.
    a visible template notice. Have them reviewed by a qualified legal adviser before you
    remove that notice. They do not yet mention accounts; the signup page tells people we
    store an email address and a password hash, and the notice should say the same.
-10. **D1 `database_id`** — `wrangler.jsonc` ships a placeholder, and **`wrangler deploy`
-    fails until it is replaced**, including the CI deploy. Run `npx wrangler d1 create
-    cypherx-portal`, paste the id it prints, then apply the migrations. See below.
+10. **D1 `database_name` and `database_id`** — `wrangler.jsonc` ships placeholders, and
+    **`wrangler deploy` fails until they match a real database**, including the CI deploy.
+    `npx wrangler d1 list` prints both for a database you already have. See below.
 
 ## Accounts and the member portal
 
@@ -138,12 +138,30 @@ which currently says the portal is coming soon. Accounts live in **Cloudflare D1
 
 ### Setting it up
 
+The Worker reads `env.Cypher_Bind`, so the `binding` in `wrangler.jsonc` must stay
+`Cypher_Bind` and match the binding name on the database in the Cloudflare dashboard.
+Rename it in both places together or not at all.
+
+For a database that already exists, copy its name and id into `wrangler.jsonc`:
+
 ```bash
-npx wrangler d1 create cypherx-portal            # prints database_id → wrangler.jsonc
-npx wrangler d1 migrations apply cypherx-portal --remote
+npx wrangler d1 list                             # name + database_id
 ```
 
-Locally, the same command with `--local` builds a SQLite database under `.wrangler/`.
+To create one from scratch:
+
+```bash
+npx wrangler d1 create cypherx-portal            # prints database_id → wrangler.jsonc
+```
+
+Either way, apply the schema before anyone tries to sign up:
+
+```bash
+npx wrangler d1 migrations apply <database_name> --remote
+```
+
+Locally, the same command with `--local` builds a SQLite database under `.wrangler/`, and
+no id is needed for that.
 
 ### Schema
 
@@ -193,7 +211,7 @@ still verify, and `isStaleHash()` triggers a re-hash at the next successful sign
 | `/portal` | GET | Redirects to `/login?next=/portal` without a session |
 
 Shared guards: `403` on a cross-origin POST, `429` past 10 attempts per IP per minute
-(`AUTH_LIMITER`), `503` when the `DB` binding is absent, and the same honeypot the contact
+(`AUTH_LIMITER`), `503` when the `Cypher_Bind` binding is absent, and the same honeypot the contact
 form uses.
 
 A login for an address with no account still runs the full key derivation against a dummy
