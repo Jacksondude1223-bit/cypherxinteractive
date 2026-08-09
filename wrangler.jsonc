@@ -1,12 +1,22 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "cypherx-interactive",
+  // Must match the Worker that Cloudflare Workers Builds deploys to, or every
+  // build logs "Failed to match Worker name" and overrides this anyway.
+  "name": "cypherxinteractive",
   "compatibility_date": "2025-01-01",
 
   // Static assets are matched before the script runs, so ordinary page loads
   // never invoke the Worker. Only unmatched paths reach src/index.js — in
   // practice POST /api/contact.
   "main": "src/index.js",
+
+  // Preflight only. wrangler parses this file before running the build
+  // command, so a build step CANNOT fix database_id for the deploy it is part
+  // of — this just turns the resulting API error into a message that says what
+  // to do. It is a no-op outside CI, so `wrangler dev` is unaffected.
+  "build": {
+    "command": "node scripts/d1-setup.mjs --preflight"
+  },
 
   // Per-IP throttles. Without CONTACT_LIMITER the form is an open relay into
   // the Discord channel; without AUTH_LIMITER /api/auth/login is a

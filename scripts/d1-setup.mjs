@@ -2,8 +2,14 @@
  * Makes the D1 database ready before a deploy, so nobody has to paste an id
  * into wrangler.jsonc by hand.
  *
- *   node scripts/d1-setup.mjs            resolve the database, then migrate --remote
- *   node scripts/d1-setup.mjs --local    migrate the local SQLite copy only
+ *   node scripts/d1-setup.mjs              resolve the database, then migrate --remote
+ *   node scripts/d1-setup.mjs --local      migrate the local SQLite copy only
+ *   node scripts/d1-setup.mjs --preflight  check the config is deployable, change nothing
+ *
+ * This has to run BEFORE wrangler starts, which is why it is the `predeploy`
+ * npm hook and not wrangler's `build.command`: wrangler parses wrangler.jsonc
+ * before it runs the build command, so a build step editing the file cannot
+ * affect the deploy it belongs to. Deploy with `npm run deploy`.
  *
  * Remote runs do three things:
  *
@@ -171,10 +177,36 @@ function wrangler(args, { capture = false } = {}) {
   });
 }
 
+/**
+ * Runs as wrangler's build command, which fires on `dev` as well as `deploy`,
+ * so it must be quick and must not touch the network. All it does is stop a CI
+ * deploy that is about to fail on the placeholder id, with a message that beats
+ * the API's "database '00000000-…' was not found".
+ */
+function preflight(configured) {
+  const inCI = Boolean(process.env.WORKERS_CI || process.env.CI);
+  if (!inCI || !isPlaceholderId(configured.id)) return;
+
+  throw new Error(
+    "wrangler.jsonc still has the placeholder D1 database_id, so this deploy " +
+      "would fail.\n" +
+      "  This build ran `wrangler deploy` directly, which skips the setup step. " +
+      "Either:\n" +
+      "  - set the deploy command to `npm run deploy` (Workers Builds → Settings " +
+      "→ Build), which resolves the id first; or\n" +
+      "  - run `npm run db:setup` once and commit the database_id it writes."
+  );
+}
+
 function main() {
   const local = process.argv.includes("--local");
   const text = readFileSync(CONFIG, "utf8");
   const configured = readD1Config(text);
+
+  if (process.argv.includes("--preflight")) {
+    preflight(configured);
+    return;
+  }
 
   if (local) {
     // The local database is a SQLite file keyed by name; no id, no account, no

@@ -61,7 +61,33 @@ npm run deploy       # d1-setup, then wrangler deploy
 Use the npm script rather than `npx wrangler deploy`. The `predeploy` hook runs
 `scripts/d1-setup.mjs`, which points the config at the real D1 database and applies any
 pending migrations first. Calling wrangler directly skips that and deploys the placeholder
-id, which fails.
+id, which fails with `D1 binding … references database '00000000-…' which was not found`.
+
+This cannot be solved with wrangler's `build.command`, which is the obvious place to reach
+for. Wrangler parses `wrangler.jsonc` **before** it runs the build command, so a build step
+that rewrites the file has no effect on the deploy it is part of — verified, not assumed.
+The build command is therefore only a preflight check that fails early, in CI, with a
+message explaining what to do.
+
+### Cloudflare Workers Builds
+
+The repository is also connected to **Workers Builds**, Cloudflare's own CI, which builds on
+push and runs whatever is in its deploy command. That command must be:
+
+```
+npm run deploy
+```
+
+not `npx wrangler deploy`. Change it under Workers &amp; Pages → the Worker → Settings → Build.
+With the default command the D1 setup never runs and every deploy fails on the placeholder.
+
+The Worker's `name` in `wrangler.jsonc` also has to match the Workers Builds project
+(`cypherxinteractive`), or each build logs `Failed to match Worker name` and silently
+overrides it.
+
+**Two CI systems now deploy this repo:** Workers Builds and `.github/workflows/deploy.yml`.
+They will both fire on a push to the default branch and race each other to publish the same
+Worker. Pick one and turn the other off.
 
 Or let CI do it: `.github/workflows/deploy.yml` deploys on every push to `main`. It needs
 two repository secrets:
@@ -154,10 +180,10 @@ week. If you add a hashing build step, raise the CSS/JS values.
    a visible template notice. Have them reviewed by a qualified legal adviser before you
    remove that notice. They do not yet mention accounts; the signup page tells people we
    store an email address and a password hash, and the notice should say the same.
-10. **D1 API token scope** — the placeholder `database_id` in `wrangler.jsonc` is filled in
-    at deploy time by `scripts/d1-setup.mjs`, so there is nothing to paste. The one thing
-    to check is that `CLOUDFLARE_API_TOKEN` carries **D1:Edit** as well as Workers
-    Scripts:Edit, or that step fails. See below.
+10. **Deploy command** — whichever CI deploys this has to run `npm run deploy`, not
+    `npx wrangler deploy`, or the D1 setup is skipped and the deploy fails on the
+    placeholder `database_id`. For Workers Builds that is a field in the dashboard. The
+    API token also needs **D1:Edit** alongside Workers Scripts:Edit. See below.
 
 ## Accounts and the member portal
 
