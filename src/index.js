@@ -5,9 +5,9 @@
  * it. Only paths with no matching asset reach `fetch` — in practice
  * POST /api/contact, which relays the contact form into Discord.
  *
- * The Discord webhook URL is a credential: anyone who holds it can post to the
- * channel until it is rotated. It lives in the DISCORD_WEBHOOK_URL secret and
- * is never sent to the browser.
+ * A Discord webhook URL is a credential: anyone who holds it can post to the
+ * channel until it is rotated. They live in Worker secrets and are never sent
+ * to the browser.
  */
 
 const ENDPOINT = "/api/contact";
@@ -32,6 +32,30 @@ const TOPICS = [
   "Careers",
 ];
 
+/**
+ * Which secret holds the webhook for each topic, and the embed colour that
+ * goes with it. Topics absent from this map (Player support, Press, Careers)
+ * go to the fallbacks below, so adding an option to the form's <select> keeps
+ * working before that option has a channel of its own.
+ *
+ * Every binding named here is optional. Set only the ones you have.
+ */
+const ROUTES = {
+  "General enquiry": { secret: "DISCORD_WEBHOOK_GENERAL", color: 0x29e0f0 },
+  Partnership: { secret: "DISCORD_WEBHOOK_PARTNERSHIPS", color: 0x8b5cf6 },
+  "AXIOM licensing": { secret: "DISCORD_WEBHOOK_PARTNERSHIPS", color: 0x8b5cf6 },
+  "Ban appeal": { secret: "DISCORD_WEBHOOK_APPEALS", color: 0xfbbf24 },
+};
+
+/**
+ * Tried in order when a topic has no channel of its own, or when the one it
+ * has is missing or malformed. General is included so a deployment that sets
+ * a single webhook still receives every topic rather than answering 503.
+ */
+const FALLBACK_SECRETS = ["DISCORD_WEBHOOK_URL", "DISCORD_WEBHOOK_GENERAL"];
+
+const DEFAULT_COLOR = 0x29e0f0;
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -51,41 +75,6 @@ export default {
 async function handleContact(request, env) {
   if (request.method !== "POST") {
     return json({ error: "Method not allowed" }, 405, { Allow: "POST" });
-  }
-
-  const webhook =
-    typeof env.DISCORD_WEBHOOK_URL === "string" ? env.DISCORD_WEBHOOK_URL.trim() : "";
-
-  if (!webhook) {
-    // Misconfiguration, not the visitor's fault: stay vague in the response,
-    // but log the binding names actually present so a name typo or a secret
-    // added to the wrong Worker is obvious in `wrangler tail`. Names only —
-    // never values.
-    console.error(
-      "DISCORD_WEBHOOK_URL missing. Bindings visible to this Worker: " +
-        (Object.keys(env).join(", ") || "(none)")
-    );
-    return json({ error: "Contact form is not configured" }, 503);
-  }
-
-  let webhookUrl;
-  try {
-    webhookUrl = new URL(webhook);
-  } catch {
-    console.error("DISCORD_WEBHOOK_URL is set but is not a valid URL");
-    return json({ error: "Contact form is misconfigured" }, 503);
-  }
-  if (!/^https?:$/.test(webhookUrl.protocol) || webhook.includes("replace-me")) {
-    console.error(
-      "DISCORD_WEBHOOK_URL looks like a placeholder or has the wrong scheme. " +
-        "Expected https://discord.com/api/webhooks/<id>/<token>"
-    );
-    return json({ error: "Contact form is misconfigured" }, 503);
-  }
-  // Warn but continue on a non-Discord host: local development points this at
-  // a stub, and that must keep working.
-  if (!/(^|\.)discord(app)?\.com$/.test(webhookUrl.hostname)) {
-    console.warn("DISCORD_WEBHOOK_URL host is not discord.com:", webhookUrl.hostname);
   }
 
   // Cheap cross-origin block. The form is same-origin, so a missing or
@@ -128,6 +117,21 @@ async function handleContact(request, env) {
     return json({ error: "That email address is not valid" }, 400);
   }
 
+  // The topic decides the channel, so this can only be resolved once the
+  // submission has been read and validated.
+  const route = resolveWebhook(env, topic);
+  if (!route) {
+    // Misconfiguration, not the visitor's fault: stay vague in the response,
+    // but log the binding names actually present so a name typo or a secret
+    // added to the wrong Worker is obvious in `wrangler tail`. Names only —
+    // never values.
+    console.error(
+      `No usable webhook for topic "${topic}". Bindings visible to this Worker: ` +
+        (Object.keys(env).join(", ") || "(none)")
+    );
+    return json({ error: "Contact form is not configured" }, 503);
+  }
+
   const limited = await isRateLimited(request, env);
   if (limited) {
     return json({ error: "Too many messages. Try again shortly." }, 429, {
@@ -137,7 +141,7 @@ async function handleContact(request, env) {
 
   const country = request.headers.get("CF-IPCountry") || "unknown";
 
-  const res = await fetch(webhook, {
+  const res = await fetch(route.url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -148,7 +152,7 @@ async function handleContact(request, env) {
         {
           title: `New enquiry — ${topic}`,
           description: message,
-          color: 0x29e0f0,
+          color: route.color,
           fields: [
             { name: "Name", value: name, inline: true },
             { name: "Email", value: email, inline: true },
@@ -163,11 +167,68 @@ async function handleContact(request, env) {
   });
 
   if (!res.ok) {
-    console.error("Discord webhook failed", res.status, await safeText(res));
+    // Name the binding, never the URL: the token is in the URL.
+    console.error(
+      `Discord webhook failed via ${route.binding}`,
+      res.status,
+      await safeText(res)
+    );
     return json({ error: "Could not deliver the message" }, 502);
   }
 
   return json({ ok: true });
+}
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * Picks the webhook for a topic: its own channel if one is configured and
+ * usable, otherwise the catch-all. Returns null when neither is set, which is
+ * the only case the caller treats as "not configured".
+ */
+function resolveWebhook(env, topic) {
+  const route = ROUTES[topic];
+
+  const candidates = route ? [route.secret] : [];
+  for (const secret of FALLBACK_SECRETS) {
+    if (!candidates.includes(secret)) candidates.push(secret);
+  }
+
+  for (const binding of candidates) {
+    const raw = typeof env[binding] === "string" ? env[binding].trim() : "";
+    if (!raw) continue;
+    if (!isUsableWebhook(raw, binding)) continue;
+    return { url: raw, binding, color: route ? route.color : DEFAULT_COLOR };
+  }
+
+  return null;
+}
+
+/** Logs and rejects placeholders and malformed values rather than posting into the void. */
+function isUsableWebhook(raw, binding) {
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    console.error(`${binding} is set but is not a valid URL`);
+    return false;
+  }
+
+  if (!/^https?:$/.test(url.protocol) || raw.includes("replace-me")) {
+    console.error(
+      `${binding} looks like a placeholder or has the wrong scheme. ` +
+        "Expected https://discord.com/api/webhooks/<id>/<token>"
+    );
+    return false;
+  }
+
+  // Warn but continue on a non-Discord host: local development points this at
+  // a stub, and that must keep working.
+  if (!/(^|\.)discord(app)?\.com$/.test(url.hostname)) {
+    console.warn(`${binding} host is not discord.com:`, url.hostname);
+  }
+
+  return true;
 }
 
 /* ------------------------------------------------------------------ */

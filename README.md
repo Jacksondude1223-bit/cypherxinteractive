@@ -106,20 +106,44 @@ week. If you add a hashing build step, raise the CSS/JS values.
 ## Contact form → Discord
 
 Submitting the form POSTs same-origin to `/api/contact`. The Worker (`src/index.js`)
-validates it and relays it to a Discord channel via webhook.
+validates it and relays it to a Discord channel via webhook, picking the channel from the
+**Topic** the visitor selected.
 
-**The webhook URL never reaches the browser.** It is a credential — anyone holding it can
-post to that channel until it is rotated — so it lives in a Worker secret:
+**A webhook URL never reaches the browser.** It is a credential — anyone holding it can post
+to that channel until it is rotated — so each one lives in a Worker secret:
 
 ```bash
-npx wrangler secret put DISCORD_WEBHOOK_URL
+npx wrangler secret put DISCORD_WEBHOOK_GENERAL
+npx wrangler secret put DISCORD_WEBHOOK_PARTNERSHIPS
+npx wrangler secret put DISCORD_WEBHOOK_APPEALS
 # paste the URL from Discord: Server Settings → Integrations → Webhooks
 ```
 
-For local development, copy `.dev.vars.example` to `.dev.vars` and put the URL there.
+For local development, copy `.dev.vars.example` to `.dev.vars` and put the URLs there.
 `.dev.vars` is gitignored.
 
-Without the secret set, the endpoint returns `503` and the page shows the fallback message.
+### Topic routing
+
+| Topic in the form | Secret | Embed colour |
+| --- | --- | --- |
+| General enquiry | `DISCORD_WEBHOOK_GENERAL` | cyan |
+| Partnership | `DISCORD_WEBHOOK_PARTNERSHIPS` | violet |
+| AXIOM licensing | `DISCORD_WEBHOOK_PARTNERSHIPS` | violet |
+| Ban appeal | `DISCORD_WEBHOOK_APPEALS` | amber |
+| Player support · Press · Careers | fallback | cyan |
+
+The routing table is `ROUTES` at the top of `src/index.js`. To give one of the fallback
+topics its own channel, add a line there and set the matching secret — no other change is
+needed.
+
+Every secret is optional. When a topic's own webhook is missing, malformed, or still the
+`replace-me` placeholder, the Worker falls back to `DISCORD_WEBHOOK_URL` (the older
+single-channel setup) and then to `DISCORD_WEBHOOK_GENERAL`, so a deployment holding one
+webhook still receives everything. Only when none of them resolve does the endpoint return
+`503` and the page show its fallback message.
+
+Failures name the *binding* in the log, never the URL — the token is part of the URL, and
+logs are not the place for it.
 
 ### What the endpoint does
 
@@ -131,7 +155,11 @@ Without the secret set, the endpoint returns `503` and the page shows the fallba
 | Malformed email | `400` |
 | Honeypot field filled | `200`, silently dropped, nothing relayed |
 | More than 5 posts/minute per IP | `429` with `Retry-After` |
+| No webhook resolves for the topic | `503`, binding names logged |
 | Discord rejects the post | `502`, logged server-side |
+
+Validation runs before the webhook is chosen, since the topic decides the channel. A
+submission that fails validation never reaches Discord.
 
 Two details worth keeping if you edit the relay:
 

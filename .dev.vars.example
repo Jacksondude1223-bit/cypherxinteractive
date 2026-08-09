@@ -1,6 +1,20 @@
 # Copy to `.dev.vars` for local development. `.dev.vars` is gitignored —
 # never commit a real webhook URL.
 #
-# In production this is set as a Worker secret, not from a file:
-#   npx wrangler secret put DISCORD_WEBHOOK_URL
-DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/000000000/replace-me"
+# In production these are Worker secrets, not a file:
+#   npx wrangler secret put DISCORD_WEBHOOK_GENERAL
+#
+# The contact form routes by topic. Each of these is optional; anything not
+# set falls back to DISCORD_WEBHOOK_URL, then to DISCORD_WEBHOOK_GENERAL.
+
+# General enquiry, and the catch-all for Player support / Press / Careers
+DISCORD_WEBHOOK_GENERAL="https://discord.com/api/webhooks/000000000/replace-me"
+
+# Partnership and AXIOM licensing
+DISCORD_WEBHOOK_PARTNERSHIPS="https://discord.com/api/webhooks/000000000/replace-me"
+
+# Ban appeal
+DISCORD_WEBHOOK_APPEALS="https://discord.com/api/webhooks/000000000/replace-me"
+
+# Optional. Older single-channel setup, still honoured as the first fallback.
+# DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/000000000/replace-me"
