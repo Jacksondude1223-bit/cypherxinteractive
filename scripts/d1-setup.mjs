@@ -111,14 +111,20 @@ export function isPlaceholderId(id) {
 /**
  * Decides which database to use.
  *
- * A name match always wins. Failing that, an account with no databases gets a
- * new one. An account with exactly one gets that one, on the grounds that a
- * project with a single D1 database and a placeholder in its config means the
- * two were meant to be each other. Two or more is genuinely ambiguous and the
- * caller has to say which, because guessing wrong points the Worker at someone
- * else's data.
+ * A configured id wins outright — it is unambiguous, and it means the config
+ * keeps working when the name in it was a guess. A name match is next. Failing
+ * both, an account with no databases gets a new one, and an account with
+ * exactly one gets that one, on the grounds that a project with a single D1
+ * database and a placeholder in its config means the two were meant to be each
+ * other. Two or more is genuinely ambiguous and the caller has to say which,
+ * because guessing wrong points the Worker at someone else's data.
  */
 export function chooseDatabase(configured, existing) {
+  if (!isPlaceholderId(configured.id)) {
+    const byId = existing.find((db) => db.id === configured.id);
+    if (byId) return { action: "matched", name: byId.name, id: byId.id };
+  }
+
   const byName = existing.find((db) => db.name === configured.name);
   if (byName) return { action: "matched", name: byName.name, id: byName.id };
 

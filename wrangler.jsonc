@@ -10,6 +10,13 @@
   // practice POST /api/contact.
   "main": "src/index.js",
 
+  // Lets src/index.js import the migration file as a string, so the schema the
+  // Worker guarantees at runtime and the schema `d1 migrations apply` writes
+  // are the same file and cannot drift.
+  "rules": [
+    { "type": "Text", "globs": ["**/*.sql"] }
+  ],
+
   // Preflight only. wrangler parses this file before running the build
   // command, so a build step CANNOT fix database_id for the deploy it is part
   // of — this just turns the resulting API error into a message that says what
@@ -39,18 +46,14 @@
   // The code reads env.Cypher_Bind, so this binding name has to match the one
   // on the database in the Cloudflare dashboard.
   //
-  // database_name and database_id below are PLACEHOLDERS and `wrangler deploy`
-  // will fail until they match a real database. Get both from:
-  //   npx wrangler d1 list
-  // or create one with:
-  //   npx wrangler d1 create <name>
-  // then apply the schema:
-  //   npx wrangler d1 migrations apply <name> --remote
+  // database_id is the real one. scripts/d1-setup.mjs will correct
+  // database_name for you if it does not match what the account calls this
+  // database; the id is what the deploy actually resolves.
   "d1_databases": [
     {
       "binding": "Cypher_Bind",
       "database_name": "cypherx-portal",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "6e5b5a4a-82bd-4763-bf5a-bbb42704dad0",
       "migrations_dir": "migrations"
     }
   ],

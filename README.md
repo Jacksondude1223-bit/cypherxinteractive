@@ -30,12 +30,14 @@ step, no framework, no tracking.
 ├── scripts/
 │   └── d1-setup.mjs        # resolves the D1 database + migrates, pre-deploy
 ├── wrangler.jsonc          # Worker config
-├── package.json
-└── .github/workflows/deploy.yml
+└── package.json
 ```
 
-Only `public/` is uploaded. Anything outside it — this README, the workflow, config —
-stays out of the deployed bundle.
+Only `public/` is uploaded. Anything outside it — this README, the scripts, config — stays
+out of the deployed bundle.
+
+Deploys come from Cloudflare Workers Builds, which is configured in the Cloudflare
+dashboard rather than in this repository.
 
 ## Local development
 
@@ -54,70 +56,46 @@ start from an empty one.
 
 ## Deploying
 
+**Cloudflare Workers Builds** is the deploy path. The repository is connected to it, it
+builds on every push, and it runs whatever sits in its deploy command — `npx wrangler
+deploy` by default. Nothing else needs to be wired up.
+
+That default works: `wrangler.jsonc` holds the real `database_id`, and the Worker creates
+its own tables on first use, so a deploy that never touches migrations still leaves a
+working site. Changing the deploy command to `npm run deploy` (Workers & Pages → the
+Worker → Settings → Build) is worth doing anyway, because that path re-resolves the
+database and applies pending migrations — which is what you'll want the day a second
+migration exists.
+
+By hand, from a terminal:
+
 ```bash
 npm run deploy       # d1-setup, then wrangler deploy
 ```
 
-Use the npm script rather than `npx wrangler deploy`. The `predeploy` hook runs
-`scripts/d1-setup.mjs`, which points the config at the real D1 database and applies any
-pending migrations first. Calling wrangler directly skips that and deploys the placeholder
-id, which fails with `D1 binding … references database '00000000-…' which was not found`.
+Two things that bite:
 
-This cannot be solved with wrangler's `build.command`, which is the obvious place to reach
-for. Wrangler parses `wrangler.jsonc` **before** it runs the build command, so a build step
-that rewrites the file has no effect on the deploy it is part of — verified, not assumed.
-The build command is therefore only a preflight check that fails early, in CI, with a
-message explaining what to do.
+- The Worker's `name` in `wrangler.jsonc` has to match the Workers Builds project
+  (`cypherxinteractive`), or every build logs `Failed to match Worker name` and silently
+  overrides it.
+- Wrangler's `build.command` looks like the place to resolve the database id and is not.
+  Wrangler parses `wrangler.jsonc` **before** running the build command, so a build step
+  that rewrites the file has no effect on the deploy it belongs to — verified by rewriting
+  `database_name` from a build command and watching the deploy use the old value anyway.
+  The build command is only a preflight, failing early in CI if the id is ever a
+  placeholder again.
 
-### Cloudflare Workers Builds
+There is no GitHub Actions workflow. There was one, and having two CI systems racing to
+publish the same Worker was worse than having one. To bring it back, a workflow needs
+`CLOUDFLARE_API_TOKEN` (with **Edit Cloudflare Workers** and **D1:Edit**) and
+`CLOUDFLARE_ACCOUNT_ID` as repository secrets, should run `npm run deploy` rather than
+calling wrangler directly, and should be gated on
+`github.ref_name == github.event.repository.default_branch` — the default branch here is
+not `main`. Turn Workers Builds off first.
 
-The repository is also connected to **Workers Builds**, Cloudflare's own CI, which builds on
-push and runs whatever is in its deploy command. That command must be:
-
-```
-npm run deploy
-```
-
-not `npx wrangler deploy`. Change it under Workers &amp; Pages → the Worker → Settings → Build.
-With the default command the D1 setup never runs and every deploy fails on the placeholder.
-
-The Worker's `name` in `wrangler.jsonc` also has to match the Workers Builds project
-(`cypherxinteractive`), or each build logs `Failed to match Worker name` and silently
-overrides it.
-
-**Two CI systems now deploy this repo:** Workers Builds and `.github/workflows/deploy.yml`.
-They will both fire on a push to the default branch and race each other to publish the same
-Worker. Pick one and turn the other off.
-
-Or let CI do it: `.github/workflows/deploy.yml` deploys on every push to `main`. It needs
-two repository secrets:
-
-| Secret | Value |
-| --- | --- |
-| `CLOUDFLARE_API_TOKEN` | API token with **Edit Cloudflare Workers** and **D1:Edit** |
-| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
-
-D1:Edit is what lets the workflow look up, and if necessary create, the database. Without
-it the Prepare D1 step fails with a permissions error from the API rather than something
-confusing later on.
-
-One optional repository **variable**:
-
-| Variable | When to set it |
-| --- | --- |
-| `D1_DATABASE_NAME` | The account has several D1 databases and the right one isn't matched by the name in `wrangler.jsonc` |
-
-The workflow deploys on a push to **whichever branch is currently the repository default**.
-It listens on `main` and `claude/cypherx-interactive-website-ezjwrn` (the default today) and
-the job itself checks `github.event.repository.default_branch`, so a push to the non-default
-one is a no-op. Switch the default to `main` later and deploys follow it with no edit here;
-rename it to something else and add that name to the trigger list.
-
-`workflow_dispatch` ignores all of that, so a manual run deploys from wherever you launch it.
-
-The Worker is named `cypherx-interactive` (change `name` in `wrangler.jsonc` if you want a
-different `*.workers.dev` subdomain). To serve it on a real domain, add a route or custom
-domain in the Cloudflare dashboard, or a `routes` entry in `wrangler.jsonc`.
+The Worker is named `cypherxinteractive` (change `name` in `wrangler.jsonc` for a different
+`*.workers.dev` subdomain). To serve it on a real domain, add a route or custom domain in
+the Cloudflare dashboard, or a `routes` entry in `wrangler.jsonc`.
 
 ## URLs
 
@@ -180,10 +158,9 @@ week. If you add a hashing build step, raise the CSS/JS values.
    a visible template notice. Have them reviewed by a qualified legal adviser before you
    remove that notice. They do not yet mention accounts; the signup page tells people we
    store an email address and a password hash, and the notice should say the same.
-10. **Deploy command** — whichever CI deploys this has to run `npm run deploy`, not
-    `npx wrangler deploy`, or the D1 setup is skipped and the deploy fails on the
-    placeholder `database_id`. For Workers Builds that is a field in the dashboard. The
-    API token also needs **D1:Edit** alongside Workers Scripts:Edit. See below.
+10. **Workers Builds deploy command** — optional but recommended: change it from
+    `npx wrangler deploy` to `npm run deploy` so migrations are applied on every build.
+    Everything works without it today; it matters the first time a second migration exists.
 
 ## Accounts and the member portal
 
@@ -213,8 +190,8 @@ How step 2 chooses:
 | The account has exactly one, and the config still holds the placeholder id | That one is adopted, and the script says so in the log |
 | The account has several and none match | Fails, listing them, and asks for `D1_DATABASE_NAME` |
 
-Set `D1_DATABASE_NAME` (env var locally, repository variable in CI) to pin a specific
-database and skip the guessing.
+Set `D1_DATABASE_NAME` in the environment to pin a specific database and skip the guessing.
+In Workers Builds that is a build variable; locally it is an ordinary env var.
 
 The Worker reads `env.Cypher_Bind`, so the `binding` in `wrangler.jsonc` has to match the
 binding name on the database in the Cloudflare dashboard. The script never touches
@@ -231,6 +208,22 @@ npx wrangler d1 list                                     # name + database_id
 npx wrangler d1 create cypherx-portal                    # or make a new one
 npx wrangler d1 migrations apply <database_name> --remote
 ```
+
+### The schema looks after itself
+
+A plain `wrangler deploy` never runs `d1 migrations apply`, so a freshly created database
+would answer the first signup with `no such table: users`. To close that gap the Worker
+imports `migrations/0001_create_users_and_sessions.sql` as text (the `Text` rule in
+`wrangler.jsonc`) and runs it once per isolate before the first account query. Every
+statement is `CREATE … IF NOT EXISTS`, so it is a no-op against a migrated database, and
+`d1 migrations apply` still works normally on top.
+
+Importing the migration rather than repeating the DDL in JavaScript means the runtime
+schema and the migration cannot drift.
+
+**This safety net covers `0001` only.** Add a `0002` and the Worker will not apply it — that
+one needs `npm run deploy` (or `npx wrangler d1 migrations apply <name> --remote`) to reach
+production.
 
 ### Schema
 
